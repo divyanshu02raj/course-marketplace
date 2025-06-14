@@ -2,9 +2,8 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL,
+  baseURL: 'https://course-marketplace-backend.onrender.com/api', // for local http://localhost:5000/api
   withCredentials: true,
 });
 
 export default instance;
-

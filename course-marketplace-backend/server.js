@@ -11,9 +11,10 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: "https://course-marketplace-ten.vercel.app", // for local http://localhost:3000
   credentials: true
 }));
+
 
 app.use("/api/auth", require("./routes/authRoutes"));
 
