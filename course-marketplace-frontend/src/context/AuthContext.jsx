@@ -5,7 +5,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // <== NEW
+  const [loading, setLoading] = useState(true);
 
   const login = (userData) => setUser(userData);
   const logout = () => setUser(null);
@@ -15,29 +15,19 @@ export const AuthProvider = ({ children }) => {
       try {
         const res = await axios.get("/auth/me");
         setUser(res.data.user);
-      } catch (err) {
+      } catch {
         setUser(null);
       } finally {
-        setLoading(false); // <== Done loading
+        setLoading(false);
       }
     };
 
     fetchUser();
   }, []);
 
-if (loading) return (
-  <div className="flex justify-center items-center h-screen">
-    <span className="text-xl font-semibold">Loading dashboard...</span>
-    {/* Or use a spinner component if you're using something like Tailwind or a UI library */}
-  </div>
-);
- // ⏳ Optional: loading spinner here
-
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);
