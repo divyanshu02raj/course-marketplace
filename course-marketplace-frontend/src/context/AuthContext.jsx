@@ -25,6 +25,13 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
+if (loading) return (
+  <div className="flex justify-center items-center h-screen">
+    <span className="text-xl font-semibold">Loading dashboard...</span>
+    {/* Or use a spinner component if you're using something like Tailwind or a UI library */}
+  </div>
+);
+ // ⏳ Optional: loading spinner here
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
