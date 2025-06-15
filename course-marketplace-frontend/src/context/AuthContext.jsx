@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  if (loading) return <div>Loading...</div>; // ⏳ Optional: loading spinner here
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
