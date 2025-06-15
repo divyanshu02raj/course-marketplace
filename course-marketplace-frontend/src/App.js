@@ -6,8 +6,12 @@ import InstructorDashboard from "./pages/InstructorDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import Landing from "./pages/Landing"; // ✅ import this
+import { useAuth } from "./context/AuthContext";
 
 function App() {
+  const { loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>; // or a spinner
   return (
     <Routes>
       {/* Public routes */}

@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 dotenv.config();
 connectDB();
@@ -11,12 +12,14 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: "https://course-marketplace-ten.vercel.app", // for local http://localhost:3000
+  origin:  "https://course-marketplace-ten.vercel.app" ,
   credentials: true
 }));
 
 app.use(express.json()); // ✅ Add this line
+app.use(cookieParser());
 app.use("/api/auth", require("./routes/authRoutes"));
+
 
 
 app.get("/", (req, res) => {
@@ -25,3 +28,5 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+//URL for vercel: "https://course-marketplace-ten.vercel.app", // for local http://localhost:3000
