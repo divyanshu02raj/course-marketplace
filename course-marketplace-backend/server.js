@@ -12,7 +12,7 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin:  "https://course-marketplace-ten.vercel.app" ,
+  origin:  'https://course-marketplace-ten.vercel.app' ,
   credentials: true
 }));
 

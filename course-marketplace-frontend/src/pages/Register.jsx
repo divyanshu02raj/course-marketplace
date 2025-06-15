@@ -30,11 +30,8 @@ export default function Register() {
     try {
       const res = await axios.post("/auth/register", form);
       login(res.data.user);
-      navigate(
-        res.data.user.role === "student"
-          ? "/student/dashboard"
-          : "/instructor/dashboard"
-      );
+      navigate("/dashboard");
+
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
     }

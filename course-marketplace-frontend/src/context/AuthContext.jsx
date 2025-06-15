@@ -31,3 +31,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// ✅ This is required for components to consume AuthContext
+export const useAuth = () => useContext(AuthContext);

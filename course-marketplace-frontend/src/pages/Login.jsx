@@ -20,11 +20,8 @@ export default function Login() {
     try {
       const res = await axios.post("/auth/login", form);
       login(res.data.user);
-      navigate(
-        res.data.user.role === "student"
-          ? "/student/dashboard"
-          : "/instructor/dashboard"
-      );
+      navigate("/dashboard");
+
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
