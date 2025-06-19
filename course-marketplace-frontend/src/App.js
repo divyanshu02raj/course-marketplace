@@ -24,7 +24,7 @@ function MainLayout() {
       <main className="flex-1">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
-            <span className="text-lg text-gray-600">Loading...</span>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-500"></div>
           </div>
         ) : (
           <Routes>
