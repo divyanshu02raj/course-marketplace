@@ -6,6 +6,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Landing from "./pages/Landing";
 import { useAuth, AuthProvider } from "./context/AuthContext";
 
+
 function App() {
   return (
     <AuthProvider>
