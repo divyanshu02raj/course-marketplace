@@ -23,9 +23,10 @@ function MainLayout() {
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
         {loading ? (
-          <div className="flex flex-1 items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-500"></div>
-          </div>
+          <div className="flex flex-col items-center justify-center space-y-4 py-20">
+  <div className="w-16 h-16 rounded-full bg-indigo-300 animate-pulse"></div>
+  <p className="text-gray-500 text-lg animate-pulse">Loading your dashboard...</p>
+</div>
         ) : (
           <Routes>
             {/* Public routes */}
