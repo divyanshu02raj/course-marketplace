@@ -28,7 +28,7 @@ export default function Login() {
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
-    } finally {
+    finally {
     setLoading(false); // stop spinner
     } 
   };
