@@ -20,7 +20,7 @@ export default function InstructorDashboard() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   if (!user) {
