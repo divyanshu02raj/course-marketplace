@@ -10,6 +10,8 @@ export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,6 +19,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true); // start spinner
     try {
       const res = await axios.post("/auth/login", form);
       login(res.data.user);
@@ -25,6 +28,9 @@ export default function Login() {
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
+    } finally {
+    setLoading(false); // stop spinner
+    } 
   };
 
   return (
@@ -85,9 +91,19 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 transition rounded-lg font-semibold shadow-lg text-white"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-semibold shadow-lg text-white transition ${
+              loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
           >
-            Log In
+            {loading ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Logging in...</span>
+              </div>
+            ) : (
+              "Log In"
+            )}
           </button>
         </form>
 
