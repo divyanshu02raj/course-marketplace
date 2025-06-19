@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard"; // unified dashboard
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Landing from "./pages/Landing";
 import { useAuth, AuthProvider } from "./context/AuthContext";
+import { motion } from "framer-motion";
 
 function App() {
   return (
@@ -23,10 +24,13 @@ function MainLayout() {
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
         {loading ? (
-          <div className="flex flex-col items-center justify-center space-y-4 py-20">
-  <div className="w-16 h-16 rounded-full bg-indigo-300 animate-pulse"></div>
-  <p className="text-gray-500 text-lg animate-pulse">Loading your dashboard...</p>
-</div>
+          <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse" }}
+          className="flex flex-1 items-center justify-center text-indigo-500 text-xl font-semibold">
+          Loading...
+        </motion.div>
         ) : (
           <Routes>
             {/* Public routes */}
