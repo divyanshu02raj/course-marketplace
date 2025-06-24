@@ -17,7 +17,7 @@ import { useAuth } from "../context/AuthContext";
 export default function StudentDashboard() {
   const [active, setActive] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth(); // ← include loading
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -34,6 +34,15 @@ export default function StudentDashboard() {
     { label: "Settings", icon: <Settings />, key: "settings" },
   ];
 
+  // ✅ Wait for loading before rendering anything
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center text-gray-400">
+        Loading...
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center text-gray-400">
@@ -41,6 +50,7 @@ export default function StudentDashboard() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-900 text-white">
@@ -123,7 +133,12 @@ export default function StudentDashboard() {
                 alt="Avatar"
                 className="w-8 h-8 rounded-full"
               />
-              <span className="text-sm text-gray-300">Hi, {user.name}</span>
+              {user?.name ? (
+  <span className="text-sm text-gray-300">Hi, {user.name}</span>
+) : (
+  <span className="text-sm text-gray-500 italic animate-pulse">Loading name...</span>
+)}
+
             </div>
           </div>
         </header>

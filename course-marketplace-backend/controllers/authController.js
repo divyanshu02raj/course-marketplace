@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const generateToken = (user) =>
-  jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+  jwt.sign({ id: user._id, name: user.name , role: user.role }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
@@ -53,11 +53,12 @@ exports.login = async (req, res) => {
 
     // ✅ Set HTTP-only cookie
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+  httpOnly: true,
+  sameSite: "Lax",
+  secure: process.env.NODE_ENV === "production",
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+});
+
 
     res.status(200).json({
       user: {

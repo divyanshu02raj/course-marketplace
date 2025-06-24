@@ -20,7 +20,7 @@ import AddCourse from "./instructor/AddCourse"; // adjust the path if necessary
 export default function InstructorDashboard() {
   const [active, setActive] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -28,8 +28,21 @@ export default function InstructorDashboard() {
     navigate("/");
   };
 
+  // ✅ Wait for loading before rendering anything
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center text-gray-400">
+        Loading...
+      </div>
+    );
+  }
+
   if (!user) {
-    return <p className="text-center mt-10 text-gray-600">You are logged out.</p>;
+    return (
+      <div className="h-screen flex items-center justify-center text-gray-400">
+        You are logged out.
+      </div>
+    );
   }
 
   const menu = [
@@ -121,7 +134,12 @@ export default function InstructorDashboard() {
                 alt="Avatar"
                 className="w-8 h-8 rounded-full"
               />
-              <span className="text-sm text-gray-300">Hi, {user.name}</span>
+              {user?.name ? (
+  <span className="text-sm text-gray-300">Hi, {user.name}</span>
+) : (
+  <span className="text-sm text-gray-500 italic animate-pulse">Loading name...</span>
+)}
+
             </div>
           </div>
         </header>

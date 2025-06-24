@@ -8,22 +8,34 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const login = (userData) => setUser(userData);
-  const logout = () => setUser(null);
+const logout = async () => {
+  try {
+    await axios.post("/auth/logout", {}, { withCredentials: true }); // <-- include credentials
+  } catch (err) {
+    console.error("Logout failed:", err);
+  } finally {
+    setUser(null); // Clear local state regardless
+  }
+};
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get("/auth/me");
-        setUser(res.data.user);
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchUser();
-  }, []);
+
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get("/auth/me");
+      console.log("Fetched user:", res.data.user); // <-- Add this line
+      setUser(res.data.user);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchUser();
+}, []);
+
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>
