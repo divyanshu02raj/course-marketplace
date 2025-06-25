@@ -8,14 +8,6 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/me", getMe);
 
-// ✅ New logout route
-router.post("/logout", (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    sameSite: "Lax",
-    secure: process.env.NODE_ENV === "production", // Only secure in production
-  });
-  return res.status(200).json({ message: "Logged out successfully" });
-});
+router.post("/logout", logout);
 
 module.exports = router;
