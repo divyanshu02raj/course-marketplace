@@ -9,8 +9,6 @@ const generateToken = (user) =>
   });
 
 
-res.json({ user });
-
 exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
