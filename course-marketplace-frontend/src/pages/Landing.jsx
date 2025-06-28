@@ -79,7 +79,7 @@ export default function Landing() {
           </motion.div>
 
           <motion.img
-            src="https://illustrations.popsy.co/purple/graduation.svg"
+            src="Landing.png"
             alt="Hero"
             className="w-full max-w-md mx-auto"
             initial={{ opacity: 0, scale: 0.95 }}
