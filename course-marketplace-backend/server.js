@@ -11,16 +11,19 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = [
-  "https://course-marketplace-ten.vercel.app", // ✅ Replace with your real Vercel URL
-];
+
+const allowedOrigin =
+  process.env.NODE_ENV === "production"
+    ? "https://course-marketplace-ten.vercel.app"
+    : "http://localhost:3000";
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: allowedOrigin,
     credentials: true,
   })
 );
+
 
 
 app.use(express.json()); // ✅ Add this line
