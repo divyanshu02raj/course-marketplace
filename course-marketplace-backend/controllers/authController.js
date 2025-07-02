@@ -50,13 +50,11 @@ exports.login = async (req, res) => {
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
     const token = generateToken(user);
-
-    // ✅ Set HTTP-only cookie
-    res.cookie("token", token, {
+res.cookie("token", token, {
   httpOnly: true,
-  sameSite: "Lax",
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   secure: process.env.NODE_ENV === "production",
-  maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 
 
@@ -92,11 +90,13 @@ exports.getMe = async (req, res) => {
 
 
 exports.logout = (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    sameSite: "Lax",
-    secure: process.env.NODE_ENV === "production", // true if deployed over HTTPS
-  });
+res.clearCookie("token", {
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  secure: process.env.NODE_ENV === "production",
+    path: "/",
+});
+
   res.status(200).json({ message: "Logged out" });
 };
 
