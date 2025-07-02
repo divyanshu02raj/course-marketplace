@@ -12,7 +12,6 @@ connectDB();
 const app = express();
 
 const allowedOrigins = [
-  "http://localhost:3000",
   "https://course-marketplace-ten.vercel.app", // ✅ Replace with your real Vercel URL
 ];
 
