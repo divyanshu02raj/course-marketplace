@@ -11,10 +11,18 @@ connectDB();
 
 const app = express();
 
-app.use(cors({
-  origin:  "https://course-marketplace-ten.vercel.app" ,
-  credentials: true
-}));
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://course-marketplace-ten.vercel.app", // ✅ Replace with your real Vercel URL
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
 
 app.use(express.json()); // ✅ Add this line
 app.use(cookieParser());

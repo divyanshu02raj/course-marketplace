@@ -1,13 +1,14 @@
+// course-marketplace-backend\routes\authRoutes.js
 const express = require("express");
 const router = express.Router();
-const { register, login, getMe, logout } = require("../controllers/authController");
+const { register, login, getMe, logout, updateUser } = require("../controllers/authController");
 const requireAuth = require("../middleware/authMiddleware");
 
-// Existing routes
+// Auth routes
 router.post("/register", register);
 router.post("/login", login);
-router.get("/me", getMe);
-
+router.get("/me", requireAuth, getMe);       // Protect this route
 router.post("/logout", logout);
+router.patch("/update", requireAuth, updateUser); // ✅ Correct, protected
 
 module.exports = router;

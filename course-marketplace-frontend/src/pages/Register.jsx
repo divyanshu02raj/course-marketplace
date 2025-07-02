@@ -18,6 +18,7 @@ export default function Register() {
     email: "",
     password: "",
     role: roleFromQuery,
+    phone: "", 
   });
   const [error, setError] = useState("");
 
@@ -92,6 +93,18 @@ export default function Register() {
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
+          <div>
+  <label className="block text-sm mb-1 text-gray-300">Phone Number</label>
+  <input
+    name="phone"
+    type="tel"
+    onChange={handleChange}
+    required
+    placeholder="+1 234 567 8900"
+    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  />
+</div>
+
 
           <div>
             <label className="block text-sm mb-1 text-gray-300">Password</label>

@@ -1,7 +1,55 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "../api/axios";
+
 import { Settings } from "lucide-react";
 
+
 const SettingsView = () => {
+  const [user, setUser] = useState({ name: "", email: "", phone: "" });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get("/auth/me"); // 👈 No full URL needed
+      setUser(res.data.user);
+    } catch (err) {
+      console.error("Failed to fetch user", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchUser();
+}, []);
+
+
+
+
+
+
+  const handleChange = (e) => {
+    setUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+const handleSave = async () => {
+  setSaving(true);
+  try {
+    const res = await axios.patch("/auth/update", user); // ✅ No baseURL, it's handled
+    alert("Profile updated!");
+    setUser(res.data.user);
+  } catch (err) {
+    console.error("Failed to update profile:", err);
+    alert("Failed to update profile");
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+  if (loading) return <div className="text-center p-10 text-white">Loading...</div>;
+
   return (
     <div className="max-w-4xl mx-auto p-6 sm:p-8 bg-gray-900 rounded-3xl shadow-xl text-white space-y-12">
       <h2 className="text-3xl sm:text-4xl font-extrabold text-indigo-400 flex items-center gap-3 mb-8">
@@ -26,7 +74,9 @@ const SettingsView = () => {
             <span className="text-gray-300 font-medium mb-1 block">Full Name</span>
             <input
               type="text"
-              placeholder="Jane Doe"
+              name="name"
+              value={user.name}
+              onChange={handleChange}
               className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
             />
           </label>
@@ -34,7 +84,19 @@ const SettingsView = () => {
             <span className="text-gray-300 font-medium mb-1 block">Email Address</span>
             <input
               type="email"
-              placeholder="jane.doe@example.com"
+              name="email"
+              value={user.email}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="text-gray-300 font-medium mb-1 block">Phone Number</span>
+            <input
+              type="text"
+              name="phone"
+              value={user.phone || ""}
+              onChange={handleChange}
               className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
             />
           </label>
@@ -43,10 +105,7 @@ const SettingsView = () => {
 
       {/* Preferences */}
       <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md space-y-8">
-        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">
-          Preferences
-        </h3>
-
+        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">Preferences</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {/* Notifications */}
           <div>
@@ -87,10 +146,7 @@ const SettingsView = () => {
 
       {/* Security */}
       <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md space-y-6 max-w-lg mx-auto">
-        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">
-          Security
-        </h3>
-
+        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">Security</h3>
         <label className="block">
           <span className="text-gray-300 font-medium mb-1 block">Current Password</span>
           <input
@@ -115,16 +171,19 @@ const SettingsView = () => {
             placeholder="••••••••"
           />
         </label>
-
         <button className="bg-indigo-600 hover:bg-indigo-700 w-full py-3 rounded-xl font-semibold transition mt-6">
           Update Password
         </button>
       </section>
 
-      {/* Save all settings */}
+      {/* Save All Changes */}
       <div className="text-center mt-6">
-        <button className="bg-indigo-600 hover:bg-indigo-700 px-10 py-3 rounded-xl font-extrabold text-lg transition">
-          Save All Changes
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-indigo-600 hover:bg-indigo-700 px-10 py-3 rounded-xl font-extrabold text-lg transition disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save All Changes"}
         </button>
       </div>
     </div>

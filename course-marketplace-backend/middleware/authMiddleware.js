@@ -1,3 +1,4 @@
+// course-marketplace-backend\middleware\authMiddleware.js
 const jwt = require("jsonwebtoken");
 
 const requireAuth = (req, res, next) => {
