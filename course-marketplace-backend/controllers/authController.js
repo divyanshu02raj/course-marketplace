@@ -131,3 +131,30 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+
+// controllers/authController.js
+
+exports.updatePassword = async (req, res) => {
+  const userId = req.user._id; // from protect middleware
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: "Both current and new passwords are required." });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect." });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully." });
+  } catch (err) {
+    res.status(500).json({ message: "Server error while updating password." });
+  }
+};

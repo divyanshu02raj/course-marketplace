@@ -1,52 +1,77 @@
 import React, { useEffect, useState } from "react";
 import axios from "../api/axios";
-
 import { Settings } from "lucide-react";
-
 
 const SettingsView = () => {
   const [user, setUser] = useState({ name: "", email: "", phone: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
-
-useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const res = await axios.get("/auth/me"); // 👈 No full URL needed
-      setUser(res.data.user);
-    } catch (err) {
-      console.error("Failed to fetch user", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchUser();
-}, []);
-
-
-
-
-
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get("/auth/me");
+        setUser(res.data.user);
+      } catch (err) {
+        console.error("Failed to fetch user", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleChange = (e) => {
     setUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-const handleSave = async () => {
-  setSaving(true);
-  try {
-    const res = await axios.patch("/auth/update", user); // ✅ No baseURL, it's handled
-    alert("Profile updated!");
-    setUser(res.data.user);
-  } catch (err) {
-    console.error("Failed to update profile:", err);
-    alert("Failed to update profile");
-  } finally {
-    setSaving(false);
-  }
-};
 
+  const handlePasswordChange = (e) => {
+    setPasswordForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await axios.patch("/auth/update", user);
+      alert("Profile updated!");
+      setUser(res.data.user);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      alert("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return alert("Please fill in all password fields.");
+    }
+
+    if (newPassword !== confirmPassword) {
+      return alert("New passwords do not match.");
+    }
+
+    try {
+      await axios.patch("/auth/update-password", {
+        currentPassword,
+        newPassword,
+      });
+
+      alert("Password updated successfully!");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err) {
+      console.error("Password update failed:", err);
+      alert(err.response?.data?.message || "Failed to update password");
+    }
+  };
 
   if (loading) return <div className="text-center p-10 text-white">Loading...</div>;
 
@@ -56,7 +81,7 @@ const handleSave = async () => {
         <Settings className="text-indigo-400 w-8 h-8 sm:w-10 sm:h-10" /> Settings
       </h2>
 
-      {/* Profile Picture and Personal Information */}
+      {/* Profile Info */}
       <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="flex-shrink-0 flex flex-col items-center sm:items-start">
           <img
@@ -107,7 +132,6 @@ const handleSave = async () => {
       <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md space-y-8">
         <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">Preferences</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {/* Notifications */}
           <div>
             <h4 className="text-xl font-semibold mb-4">Notifications</h4>
             <label className="flex items-center gap-3 mb-3 cursor-pointer">
@@ -123,8 +147,6 @@ const handleSave = async () => {
               <span>SMS Notifications</span>
             </label>
           </div>
-
-          {/* Appearance */}
           <div>
             <h4 className="text-xl font-semibold mb-4">Appearance</h4>
             <label className="flex items-center gap-3 mb-3 cursor-pointer">
@@ -151,6 +173,9 @@ const handleSave = async () => {
           <span className="text-gray-300 font-medium mb-1 block">Current Password</span>
           <input
             type="password"
+            name="currentPassword"
+            value={passwordForm.currentPassword}
+            onChange={handlePasswordChange}
             className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
             placeholder="••••••••"
           />
@@ -159,6 +184,9 @@ const handleSave = async () => {
           <span className="text-gray-300 font-medium mb-1 block">New Password</span>
           <input
             type="password"
+            name="newPassword"
+            value={passwordForm.newPassword}
+            onChange={handlePasswordChange}
             className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
             placeholder="••••••••"
           />
@@ -167,11 +195,17 @@ const handleSave = async () => {
           <span className="text-gray-300 font-medium mb-1 block">Confirm New Password</span>
           <input
             type="password"
+            name="confirmPassword"
+            value={passwordForm.confirmPassword}
+            onChange={handlePasswordChange}
             className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
             placeholder="••••••••"
           />
         </label>
-        <button className="bg-indigo-600 hover:bg-indigo-700 w-full py-3 rounded-xl font-semibold transition mt-6">
+        <button
+          onClick={handlePasswordUpdate}
+          className="bg-indigo-600 hover:bg-indigo-700 w-full py-3 rounded-xl font-semibold transition mt-6"
+        >
           Update Password
         </button>
       </section>
