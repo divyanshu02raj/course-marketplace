@@ -12,10 +12,10 @@ connectDB();
 const app = express();
 
 
-const allowedOrigin = "https://course-marketplace-ten.vercel.app"
-  // process.env.NODE_ENV === "production"
-  //   ? "https://course-marketplace-ten.vercel.app"
-  //   : "http://localhost:3000";
+const allowedOrigin = 
+  process.env.NODE_ENV === "production"
+    ? "https://course-marketplace-ten.vercel.app"
+    : "http://localhost:3000";
 
 app.use(
   cors({
