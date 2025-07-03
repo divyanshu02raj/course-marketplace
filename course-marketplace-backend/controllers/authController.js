@@ -100,7 +100,6 @@ res.clearCookie("token", {
   res.status(200).json({ message: "Logged out" });
 };
 
-// PATCH /api/auth/update
 exports.updateUser = async (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ message: "Not authenticated" });
@@ -109,16 +108,21 @@ exports.updateUser = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.id;
 
-    const { name, email, phone } = req.body;
+    const { name, email, phone, profileImage } = req.body;
 
-    // Optional: validate email/phone format
+    // Optional: validate email or phone format
     if (phone && !/^\+?[0-9]{10,15}$/.test(phone)) {
       return res.status(400).json({ message: "Invalid phone number format" });
     }
 
     const updated = await User.findByIdAndUpdate(
       userId,
-      { name, email, phone },
+      {
+        ...(name && { name }),
+        ...(email && { email }),
+        ...(phone && { phone }),
+        ...(profileImage && { profileImage }), // ✅ Add profileImage if provided
+      },
       { new: true, runValidators: true }
     ).select("-password");
 
@@ -126,11 +130,10 @@ exports.updateUser = async (req, res) => {
 
     res.json({ user: updated });
   } catch (err) {
-    console.error(err);
+    console.error("Update error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 // controllers/authController.js
 
@@ -158,3 +161,4 @@ exports.updatePassword = async (req, res) => {
     res.status(500).json({ message: "Server error while updating password." });
   }
 };
+

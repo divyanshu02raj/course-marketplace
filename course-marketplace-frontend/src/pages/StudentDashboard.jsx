@@ -366,7 +366,7 @@ const sortedCourses = filteredCourses.sort((a, b) => {
         {/* User */}
         <div className="flex items-center gap-2">
           <img
-            src="https://i.pravatar.cc/40?img=3"
+            src={user.profileImage}
             alt="Avatar"
             className="w-8 h-8 rounded-full"
           />

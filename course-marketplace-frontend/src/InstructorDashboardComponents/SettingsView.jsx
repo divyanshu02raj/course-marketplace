@@ -2,10 +2,14 @@ import React, { useEffect, useState } from "react";
 import axios from "../api/axios";
 import { Eye, EyeOff } from "lucide-react";
 
+const CLOUD_NAME = "dg05wkeqo";
+const UPLOAD_PRESET = "profile_pictures";
+
 const InstructorSettingsView = () => {
-  const [user, setUser] = useState({ name: "", email: "", phone: "" });
+  const [user, setUser] = useState({ name: "", email: "", phone: "", profileImage: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -55,38 +59,57 @@ const InstructorSettingsView = () => {
 
   const handlePasswordUpdate = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
-
     if (!currentPassword || !newPassword || !confirmPassword) {
       return alert("Please fill in all password fields.");
     }
-
     if (newPassword !== confirmPassword) {
       return alert("New passwords do not match.");
     }
-
     try {
       await axios.patch("/auth/update-password", {
         currentPassword,
         newPassword,
       });
       alert("Password updated successfully!");
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
       console.error("Password update failed:", err);
       alert(err.response?.data?.message || "Failed to update password");
     }
   };
 
-  if (loading)
-    return (
-      <div className="text-center p-10 text-gray-900 dark:text-white">
-        Loading...
-      </div>
-    );
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setUser((prev) => ({ ...prev, profileImage: data.secure_url }));
+        alert("Image uploaded. Click Save Changes to apply.");
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center p-10 text-gray-900 dark:text-white">Loading...</div>;
+  }
 
   return (
     <div className="w-full px-6 py-10 text-gray-900 dark:text-white">
@@ -100,13 +123,16 @@ const InstructorSettingsView = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
           <div className="flex flex-col items-center">
             <img
-              src="https://placehold.co/100x100"
+              src={user.profileImage || "https://placehold.co/100x100"}
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover border-2 border-indigo-500"
             />
-            <button className="mt-2 px-4 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
-              Change Picture
-            </button>
+            <label className="mt-2">
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+              <span className="cursor-pointer px-4 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 inline-block">
+                {uploading ? "Uploading..." : "Change Picture"}
+              </span>
+            </label>
           </div>
           <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block text-sm font-medium">
@@ -164,9 +190,7 @@ const InstructorSettingsView = () => {
             };
             return (
               <div key={key} className="relative">
-                <label className="block text-sm font-medium mb-1">
-                  {labels[key]}
-                </label>
+                <label className="block text-sm font-medium mb-1">{labels[key]}</label>
                 <input
                   type={showPassword[key] ? "text" : "password"}
                   name={key + "Password"}

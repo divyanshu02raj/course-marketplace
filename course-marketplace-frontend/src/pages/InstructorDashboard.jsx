@@ -203,7 +203,7 @@ export default function InstructorDashboard() {
             {/* User */}
             <div className="flex items-center gap-2">
               <img
-                src="https://i.pravatar.cc/40?img=5"
+                src={user.profileImage}
                 alt="Avatar"
                 className="w-8 h-8 rounded-full"
               />

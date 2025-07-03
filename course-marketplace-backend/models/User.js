@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ["student", "instructor"], required: true },
   phone: { type: String },
+  profileImage: {type: String, default:""},
 });
 
 // ✅ Hash password before saving (on register or update)
