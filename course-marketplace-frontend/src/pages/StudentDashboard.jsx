@@ -14,6 +14,9 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import useTheme from "../hooks/useTheme"; // adjust path as needed
+import { Moon, Sun } from "lucide-react";
+
 
 
 
@@ -29,6 +32,9 @@ import DashboardView from "../StudentDashboardComponents/DashboardView";
 
 
 export default function StudentDashboard() {
+  
+  const { theme, toggleTheme } = useTheme();
+
   const [active, setActive] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout, loading } = useAuth();
@@ -227,10 +233,10 @@ const sortedCourses = filteredCourses.sort((a, b) => {
   }
 
   return (
-<div className="h-screen flex overflow-hidden bg-gray-900 text-white">
+<div className="h-screen flex overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-white">
   {/* Sidebar */}
   <aside
-    className={`w-64 bg-gray-950 border-r border-white/10 p-6 z-30 transform transition-transform duration-300 ease-in-out
+    className={`w-64 bg-gray-100 dark:bg-gray-950 border-r border-gray-200 dark:border-white/10 p-6 z-30 transform transition-transform duration-300 ease-in-out
       fixed md:relative h-full md:h-auto
       ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
   >
@@ -238,13 +244,15 @@ const sortedCourses = filteredCourses.sort((a, b) => {
     <div className="flex md:hidden justify-end mb-4">
       <button
         onClick={() => setSidebarOpen(false)}
-        className="text-white hover:text-gray-300"
+        className="text-gray-700 dark:text-white hover:text-black dark:hover:text-gray-300"
       >
         <X size={24} />
       </button>
     </div>
 
-    <h1 className="text-2xl font-bold text-indigo-400 mb-8">🎓 CourseHub</h1>
+    <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-8">
+      🎓 CourseHub
+    </h1>
     <nav className="flex-1 space-y-4 overflow-y-auto">
       {menu.map((item) => (
         <button
@@ -256,7 +264,7 @@ const sortedCourses = filteredCourses.sort((a, b) => {
           className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all w-full text-left ${
             active === item.key
               ? "bg-indigo-600 text-white"
-              : "text-gray-400 hover:bg-gray-800"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800"
           }`}
         >
           {item.icon}
@@ -267,7 +275,7 @@ const sortedCourses = filteredCourses.sort((a, b) => {
 
     <button
       onClick={handleLogout}
-      className="mt-8 flex items-center gap-3 text-sm text-red-400 hover:text-red-300"
+      className="mt-8 flex items-center gap-3 text-sm text-red-500 hover:text-red-400"
     >
       <LogOut size={18} /> Logout
     </button>
@@ -284,56 +292,78 @@ const sortedCourses = filteredCourses.sort((a, b) => {
   {/* Main Content */}
   <div className="flex-1 flex flex-col overflow-hidden">
     {/* Header */}
-    <header className="flex justify-between items-center px-4 md:px-8 py-4 border-b border-white/10 bg-gray-900">
+    <header className="flex justify-between items-center px-4 md:px-8 py-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm">
       <div className="flex items-center gap-4">
         <button
-          className="md:hidden text-white"
+          className="md:hidden text-gray-700 dark:text-white"
           onClick={() => setSidebarOpen(true)}
         >
           <Menu size={24} />
         </button>
-        <h2 className="text-xl font-semibold capitalize text-indigo-300">
+        <h2 className="text-xl font-semibold capitalize text-indigo-600 dark:text-indigo-300">
           {active}
         </h2>
       </div>
+
       <div className="flex items-center gap-6">
+        {/* Notifications */}
         <div className="relative">
-  <button onClick={() => setShowNotifications(!showNotifications)} className="relative p-2">
-    <Bell className="text-gray-400 hover:text-white w-6 h-6" />
-    {unreadCount > 0 && (
-      <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
-    )}
-  </button>
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative p-2"
+          >
+            <Bell className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white w-6 h-6" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
+            )}
+          </button>
 
-  {showNotifications && (
-    <div
-  className="absolute top-full left-1/2 -translate-x-[60%] mt-2 w-[90vw] max-w-xs bg-gray-800 rounded-xl shadow-lg border border-gray-700 z-50 sm:left-auto sm:right-0 sm:translate-x-0 sm:w-80"
->
+          {showNotifications && (
+            <div className="absolute top-full left-1/2 -translate-x-[60%] mt-2 w-[90vw] max-w-xs bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 sm:left-auto sm:right-0 sm:translate-x-0 sm:w-80">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 font-semibold">
+                Notifications
+              </div>
+              <ul className="max-h-60 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
+                {notifications.length ? (
+                  notifications.map((note, i) => (
+                    <li
+                      key={i}
+                      className="p-4 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-800 dark:text-gray-300"
+                    >
+                      <p className="text-black dark:text-white font-medium">
+                        {note.title}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {note.time}
+                      </p>
+                    </li>
+                  ))
+                ) : (
+                  <li className="p-4 text-gray-500 text-sm text-center">
+                    No notifications
+                  </li>
+                )}
+              </ul>
+              <div className="p-3 text-center text-sm border-t border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                View All
+              </div>
+            </div>
+          )}
+        </div>
 
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-5 h-5 text-yellow-400" />
+          ) : (
+            <Moon className="w-5 h-5 text-blue-600" />
+          )}
+        </button>
 
-      <div className="p-4 border-b border-gray-700 text-indigo-400 font-semibold">
-        Notifications
-      </div>
-      <ul className="max-h-60 overflow-y-auto divide-y divide-gray-700">
-        {notifications.length ? (
-          notifications.map((note, i) => (
-            <li key={i} className="p-4 hover:bg-gray-700 text-sm text-gray-300">
-              <p className="text-white font-medium">{note.title}</p>
-              <p className="text-xs text-gray-500">{note.time}</p>
-            </li>
-          ))
-        ) : (
-          <li className="p-4 text-gray-500 text-sm text-center">No notifications</li>
-        )}
-      </ul>
-      <div className="p-3 text-center text-sm border-t border-gray-700 text-indigo-400 hover:underline cursor-pointer">
-        View All
-      </div>
-    </div>
-  )}
-</div>
-
-
+        {/* User */}
         <div className="flex items-center gap-2">
           <img
             src="https://i.pravatar.cc/40?img=3"
@@ -341,9 +371,11 @@ const sortedCourses = filteredCourses.sort((a, b) => {
             className="w-8 h-8 rounded-full"
           />
           {user?.name ? (
-            <span className="text-sm text-gray-300">Hi, {user.name}</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Hi, {user.name}
+            </span>
           ) : (
-            <span className="text-sm text-gray-500 italic animate-pulse">
+            <span className="text-sm text-gray-400 italic animate-pulse">
               Loading name...
             </span>
           )}
@@ -351,66 +383,50 @@ const sortedCourses = filteredCourses.sort((a, b) => {
       </div>
     </header>
 
+    {/* Main */}
+    <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-white text-black dark:bg-gray-900 dark:text-white">
+      {active === "dashboard" && <DashboardView />}
+      {active === "courses" && (
+        <CoursesView
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          enrollmentFilter={enrollmentFilter}
+          setEnrollmentFilter={setEnrollmentFilter}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          courseCategories={courseCategories}
+          courses={courses}
+        />
+      )}
+      {active === "my-courses" && <MyCourses courses={courses} />}
+      {active === "schedule" && (
+        <ScheduleView
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          sessions={sessions}
+          filteredSessions={filteredSessions}
+          sessionDates={sessionDates}
+        />
+      )}
+      {active === "certificates" && (
+        <CertificatesView
+          certificates={certificates}
+          certificateFilter={certificateFilter}
+          setCertificateFilter={setCertificateFilter}
+        />
+      )}
+      {active === "messages" && (
+        <MessagesView
+          messages={messages}
+          selectedMessage={selectedMessage}
+          setSelectedMessage={setSelectedMessage}
+        />
+      )}
+      {active === "settings" && <SettingsView />}
+      {active === "assessments" && <AssessmentsView />}
+    </main>
+  </div>
+</div>
 
-
-
-          <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-900">
-
-
-          
-{active === "dashboard" && <DashboardView />}
-
-  {active === "courses" && (
-  <CoursesView
-    searchQuery={searchQuery}
-    setSearchQuery={setSearchQuery}
-    enrollmentFilter={enrollmentFilter}
-    setEnrollmentFilter={setEnrollmentFilter}
-    categoryFilter={categoryFilter}
-    setCategoryFilter={setCategoryFilter}
-    courseCategories={courseCategories}
-    courses={courses}
-  />
-)}
-{active === "my-courses" && <MyCourses courses={courses} />}
-
-{active === "schedule" && (
-  <ScheduleView
-    selectedDate={selectedDate}
-    setSelectedDate={setSelectedDate}
-    sessions={sessions}
-    filteredSessions={filteredSessions}
-    sessionDates={sessionDates}
-  />
-)}
-
-  
-    {active === "certificates" && (
-      <CertificatesView
-        certificates={certificates}
-        certificateFilter={certificateFilter}
-        setCertificateFilter={setCertificateFilter}
-      />
-    )}
-  
-
-         
-
-         
-{active === "messages" && (
-  <MessagesView
-    messages={messages}
-    selectedMessage={selectedMessage}
-    setSelectedMessage={setSelectedMessage}
-  />
-)}
-
-{active === "settings" && <SettingsView />}
-
-{active === "assessments" && <AssessmentsView />}
-
-</main>
-      </div>
-    </div>
   );
 }

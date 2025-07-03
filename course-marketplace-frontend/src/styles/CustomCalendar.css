@@ -25,6 +25,15 @@
   background-color: #f0f4ff;
 }
 
+/* Dark mode override */
+.dark .react-calendar__navigation button {
+  color: #a5b4fc;
+}
+
+.dark .react-calendar__navigation button:hover {
+  background-color: #1e1b4b;
+}
+
 .react-calendar__month-view__weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -33,6 +42,10 @@
   text-transform: uppercase;
   color: #9ca3af;
   margin-bottom: 0.5rem;
+}
+
+.dark .react-calendar__month-view__weekdays {
+  color: #6b7280;
 }
 
 .react-calendar__month-view__days {
@@ -55,6 +68,16 @@
   background-color: #f3f4f6;
 }
 
+/* Dark mode overrides for tiles */
+.dark .react-calendar__tile {
+  color: #d1d5db;
+}
+
+.dark .react-calendar__tile:hover {
+  background-color: #374151;
+}
+
+/* Today indicator */
 .custom-tile-today {
   border: 2px solid #4f46e5;
   border-radius: 0.75rem;
@@ -62,11 +85,23 @@
   color: #4f46e5 !important;
 }
 
+.dark .custom-tile-today {
+  border-color: #818cf8;
+  color: #818cf8 !important;
+}
+
+/* Session highlight */
 .custom-tile-session {
   background-color: #eef2ff;
   color: #4338ca;
 }
 
+.dark .custom-tile-session {
+  background-color: #312e81;
+  color: #c7d2fe;
+}
+
+/* Dot indicator */
 .custom-tile-dot {
   width: 6px;
   height: 6px;
@@ -74,4 +109,8 @@
   border-radius: 9999px;
   margin: 0 auto;
   margin-top: 6px;
+}
+
+.dark .custom-tile-dot {
+  background-color: #818cf8;
 }

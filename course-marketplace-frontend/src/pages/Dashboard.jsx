@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\pages\Dashboard.jsx
 import { useAuth } from "../context/AuthContext";
 import StudentDashboard from "./StudentDashboard";
 import InstructorDashboard from "./InstructorDashboard";

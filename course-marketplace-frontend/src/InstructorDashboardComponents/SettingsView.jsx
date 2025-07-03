@@ -1,214 +1,203 @@
-import React, { useState } from "react";
-import { Settings } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import axios from "../api/axios";
+import { Eye, EyeOff } from "lucide-react";
 
 const InstructorSettingsView = () => {
-  // Local state for form inputs
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [payoutMethod, setPayoutMethod] = useState("paypal"); // example
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: false,
-    sms: false,
+  const [user, setUser] = useState({ name: "", email: "", phone: "" });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
-  const [theme, setTheme] = useState("dark");
-  const [passwords, setPasswords] = useState({
-    current: "",
-    new: "",
-    confirm: "",
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
   });
 
-  // Handlers
-  const handleNotificationChange = (type) => {
-    setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get("/auth/me");
+        setUser(res.data.user);
+      } catch (err) {
+        console.error("Failed to fetch user", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const handleChange = (e) => {
+    setUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswords((prev) => ({ ...prev, [name]: value }));
+    setPasswordForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSaveSettings = () => {
-    // TODO: validate and submit settings to backend
-    alert("Settings saved!");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await axios.patch("/auth/update", user);
+      alert("Profile updated!");
+      setUser(res.data.user);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      alert("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handlePasswordUpdate = () => {
-    // TODO: validate password inputs & submit password change
-    alert("Password updated!");
+  const handlePasswordUpdate = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return alert("Please fill in all password fields.");
+    }
+
+    if (newPassword !== confirmPassword) {
+      return alert("New passwords do not match.");
+    }
+
+    try {
+      await axios.patch("/auth/update-password", {
+        currentPassword,
+        newPassword,
+      });
+      alert("Password updated successfully!");
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      console.error("Password update failed:", err);
+      alert(err.response?.data?.message || "Failed to update password");
+    }
   };
+
+  if (loading)
+    return (
+      <div className="text-center p-10 text-gray-900 dark:text-white">
+        Loading...
+      </div>
+    );
 
   return (
-    <div className="max-w-4xl mx-auto p-6 sm:p-8 bg-gray-900 rounded-3xl shadow-xl text-white space-y-12">
-      <h2 className="text-3xl sm:text-4xl font-extrabold text-indigo-400 flex items-center gap-3 mb-8">
-        <Settings className="text-indigo-400 w-8 h-8 sm:w-10 sm:h-10" /> Settings
-      </h2>
+    <div className="w-full px-6 py-10 text-gray-900 dark:text-white">
+      <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-10">
+        Instructor Settings
+      </h1>
 
-      {/* Profile Section */}
-      <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md flex flex-col sm:flex-row items-center sm:items-start gap-6">
-        <div className="flex-shrink-0 flex flex-col items-center sm:items-start">
-          <img
-            src="https://placehold.co/96x96/png"
-            alt="Profile"
-            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-indigo-500 object-cover"
-          />
-          <button className="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition text-sm whitespace-nowrap">
-            Change Picture
+      {/* Profile Info Section */}
+      <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 mb-12">
+        <h2 className="text-xl font-semibold mb-6">Profile Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+          <div className="flex flex-col items-center">
+            <img
+              src="https://placehold.co/100x100"
+              alt="Profile"
+              className="w-24 h-24 rounded-full object-cover border-2 border-indigo-500"
+            />
+            <button className="mt-2 px-4 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
+              Change Picture
+            </button>
+          </div>
+          <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label className="block text-sm font-medium">
+              Full Name
+              <input
+                type="text"
+                name="name"
+                value={user.name}
+                onChange={handleChange}
+                className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              Email Address
+              <input
+                type="email"
+                name="email"
+                value={user.email}
+                onChange={handleChange}
+                className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </label>
+            <label className="block text-sm font-medium col-span-1 sm:col-span-2">
+              Phone Number
+              <input
+                type="text"
+                name="phone"
+                value={user.phone}
+                onChange={handleChange}
+                className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </label>
+          </div>
+        </div>
+        <div className="text-right mt-6">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-md text-white text-sm disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
-        <form className="flex-1 space-y-6 w-full max-w-lg" onSubmit={(e) => e.preventDefault()}>
-          <label className="block">
-            <span className="text-gray-300 font-medium mb-1 block">Full Name</span>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Jane Instructor"
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-300 font-medium mb-1 block">Email Address</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="jane.instructor@example.com"
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-          </label>
-        </form>
-      </section>
+      </div>
 
-      {/* Payout Method Section */}
-      <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md max-w-lg mx-auto space-y-4">
-        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">
-          Payout Method
-        </h3>
-        <select
-          value={payoutMethod}
-          onChange={(e) => setPayoutMethod(e.target.value)}
-          className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-        >
-          <option value="paypal">PayPal</option>
-          <option value="bank">Bank Transfer</option>
-          <option value="stripe">Stripe</option>
-        </select>
-      </section>
-
-      {/* Preferences */}
-      <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md space-y-8">
-        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">
-          Preferences
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {/* Notifications */}
-          <div>
-            <h4 className="text-xl font-semibold mb-4">Notifications</h4>
-            {["email", "push", "sms"].map((type) => (
-              <label
-                key={type}
-                className="flex items-center gap-3 mb-3 cursor-pointer"
-              >
+      {/* Password Change Section */}
+      <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-6">Change Password</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {["current", "new", "confirm"].map((key) => {
+            const labels = {
+              current: "Current Password",
+              new: "New Password",
+              confirm: "Confirm New Password",
+            };
+            return (
+              <div key={key} className="relative">
+                <label className="block text-sm font-medium mb-1">
+                  {labels[key]}
+                </label>
                 <input
-                  type="checkbox"
-                  checked={notifications[type]}
-                  onChange={() => handleNotificationChange(type)}
-                  className="form-checkbox h-5 w-5 text-indigo-500"
+                  type={showPassword[key] ? "text" : "password"}
+                  name={key + "Password"}
+                  value={passwordForm[key + "Password"]}
+                  onChange={handlePasswordChange}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm pr-10 focus:ring-2 focus:ring-indigo-500"
                 />
-                <span>
-                  {type.charAt(0).toUpperCase() + type.slice(1)} Notifications
-                </span>
-              </label>
-            ))}
-          </div>
-
-          {/* Appearance */}
-          <div>
-            <h4 className="text-xl font-semibold mb-4">Appearance</h4>
-            <label className="flex items-center gap-3 mb-3 cursor-pointer">
-              <input
-                type="radio"
-                name="theme"
-                checked={theme === "dark"}
-                onChange={() => setTheme("dark")}
-                className="form-radio h-5 w-5 text-indigo-500"
-              />
-              <span>Dark Mode</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="theme"
-                checked={theme === "light"}
-                onChange={() => setTheme("light")}
-                className="form-radio h-5 w-5 text-indigo-500"
-              />
-              <span>Light Mode</span>
-            </label>
-          </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword((prev) => ({
+                      ...prev,
+                      [key]: !prev[key],
+                    }))
+                  }
+                  className="absolute right-3 top-9 text-gray-500 dark:text-gray-400"
+                >
+                  {showPassword[key] ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            );
+          })}
         </div>
-      </section>
-
-      {/* Security */}
-      <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md space-y-6 max-w-lg mx-auto">
-        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">
-          Security
-        </h3>
-
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
-          <label className="block">
-            <span className="text-gray-300 font-medium mb-1 block">Current Password</span>
-            <input
-              type="password"
-              name="current"
-              value={passwords.current}
-              onChange={handlePasswordChange}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-              placeholder="••••••••"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-300 font-medium mb-1 block">New Password</span>
-            <input
-              type="password"
-              name="new"
-              value={passwords.new}
-              onChange={handlePasswordChange}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-              placeholder="••••••••"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-300 font-medium mb-1 block">Confirm New Password</span>
-            <input
-              type="password"
-              name="confirm"
-              value={passwords.confirm}
-              onChange={handlePasswordChange}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-              placeholder="••••••••"
-            />
-          </label>
-
+        <div className="text-right mt-6">
           <button
-            type="button"
             onClick={handlePasswordUpdate}
-            className="bg-indigo-600 hover:bg-indigo-700 w-full py-3 rounded-xl font-semibold transition mt-6"
+            className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-md text-white text-sm"
           >
             Update Password
           </button>
-        </form>
-      </section>
-
-      {/* Save all settings */}
-      <div className="text-center mt-6">
-        <button
-          onClick={handleSaveSettings}
-          className="bg-indigo-600 hover:bg-indigo-700 px-10 py-3 rounded-xl font-extrabold text-lg transition"
-        >
-          Save All Changes
-        </button>
+        </div>
       </div>
     </div>
   );

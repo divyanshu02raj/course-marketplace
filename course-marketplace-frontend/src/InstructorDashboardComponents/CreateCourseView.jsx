@@ -1,5 +1,5 @@
-// /InstructorDashboardComponents/CreateCourseView.jsx
 import { useState } from "react";
+import { UploadCloud } from "lucide-react";
 
 export default function CreateCourseView() {
   const [title, setTitle] = useState("");
@@ -13,124 +13,123 @@ export default function CreateCourseView() {
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
     setThumbnail(file);
-    if (file) {
-      setPreviewUrl(URL.createObjectURL(file));
-    }
+    if (file) setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simulate form submit
-    console.log({
-      title,
-      shortDesc,
-      description,
-      category,
-      price,
-      thumbnail,
-    });
+    console.log({ title, shortDesc, description, category, price, thumbnail });
     alert("Course submitted (dummy action)");
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-800 rounded-2xl shadow-lg text-white">
-      <h2 className="text-2xl font-bold text-indigo-400 mb-6">Create a New Course</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Course Title */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-1">Course Title</label>
-          <input
-            type="text"
-            className="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., Mastering React Hooks"
-            required
-          />
-        </div>
+    <div className="w-full px-4 sm:px-6 lg:px-12 py-8">
+      <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-8">📘 Create a New Course</h2>
 
-        {/* Short Description */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-1">Short Description</label>
-          <input
-            type="text"
-            className="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none"
-            value={shortDesc}
-            onChange={(e) => setShortDesc(e.target.value)}
-            placeholder="e.g., A concise summary for course listing"
-            required
-          />
+      <form onSubmit={handleSubmit} className="space-y-10">
+        {/* Title + Short Desc */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium mb-2">Course Title</label>
+            <input
+              type="text"
+              className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
+              placeholder="e.g., Advanced Next.js"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Short Description</label>
+            <input
+              type="text"
+              className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
+              placeholder="Quick summary for listing"
+              value={shortDesc}
+              onChange={(e) => setShortDesc(e.target.value)}
+              required
+            />
+          </div>
         </div>
 
         {/* Detailed Description */}
         <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-1">Detailed Description</label>
+          <label className="block text-sm font-medium mb-2">Detailed Description</label>
           <textarea
-            rows="5"
-            className="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none"
+            rows="6"
+            className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
+            placeholder="Explain what students will learn, course format, etc."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Course overview, learning outcomes, etc."
             required
           ></textarea>
         </div>
 
-        {/* Category */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-1">Category</label>
-          <select
-            className="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          >
-            <option value="">Select a category</option>
-            <option value="web-dev">Web Development</option>
-            <option value="design">Design</option>
-            <option value="marketing">Marketing</option>
-            <option value="ai">Artificial Intelligence</option>
-          </select>
-        </div>
-
-        {/* Price */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-1">Price (USD)</label>
-          <input
-            type="number"
-            className="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="e.g., 49.99"
-            required
-          />
+        {/* Category + Price */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium mb-2">Category</label>
+            <select
+              className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
+            >
+              <option value="">Select a category</option>
+              <option value="web-dev">Web Development</option>
+              <option value="design">Design</option>
+              <option value="marketing">Marketing</option>
+              <option value="ai">Artificial Intelligence</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Price (USD)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
+              placeholder="e.g., 49.99"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
+          </div>
         </div>
 
         {/* Thumbnail Upload */}
         <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">Course Thumbnail</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleThumbnailChange}
-            className="text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700"
-            required
-          />
-          {previewUrl && (
-            <img
-              src={previewUrl}
-              alt="Thumbnail Preview"
-              className="mt-4 w-48 h-28 object-cover rounded-lg border border-gray-600"
-            />
-          )}
+          <label className="block text-sm font-medium mb-2">Course Thumbnail</label>
+          <div className="flex flex-col sm:flex-row gap-6 items-start">
+            <label className="relative flex flex-col justify-center items-center w-full sm:w-64 h-40 bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-indigo-400 rounded-lg cursor-pointer hover:border-indigo-600 transition">
+              {previewUrl ? (
+                <img src={previewUrl} alt="Thumbnail Preview" className="w-full h-full object-cover rounded-lg" />
+              ) : (
+                <div className="text-center text-gray-500 dark:text-gray-400 flex flex-col items-center">
+                  <UploadCloud className="w-8 h-8 mb-2" />
+                  <span className="text-sm">Upload Thumbnail</span>
+                  <span className="text-xs">PNG, JPG, JPEG</span>
+                </div>
+              )}
+              <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
+            </label>
+
+            {thumbnail && (
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <p>File selected: <strong>{thumbnail.name}</strong></p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit */}
         <div>
           <button
             type="submit"
-            className="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition"
+            className="inline-block px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition"
           >
-            Create Course
+            🎉 Submit Course
           </button>
         </div>
       </form>

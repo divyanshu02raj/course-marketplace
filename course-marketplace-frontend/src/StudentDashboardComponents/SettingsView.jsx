@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "../api/axios";
-import { Settings } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 const SettingsView = () => {
   const [user, setUser] = useState({ name: "", email: "", phone: "" });
@@ -10,6 +10,11 @@ const SettingsView = () => {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
+  });
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
   });
 
   useEffect(() => {
@@ -64,161 +69,135 @@ const SettingsView = () => {
         currentPassword,
         newPassword,
       });
-
       alert("Password updated successfully!");
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (err) {
       console.error("Password update failed:", err);
       alert(err.response?.data?.message || "Failed to update password");
     }
   };
 
-  if (loading) return <div className="text-center p-10 text-white">Loading...</div>;
+  if (loading)
+    return (
+      <div className="text-center p-10 text-gray-900 dark:text-white">
+        Loading...
+      </div>
+    );
 
   return (
-    <div className="max-w-4xl mx-auto p-6 sm:p-8 bg-gray-900 rounded-3xl shadow-xl text-white space-y-12">
-      <h2 className="text-3xl sm:text-4xl font-extrabold text-indigo-400 flex items-center gap-3 mb-8">
-        <Settings className="text-indigo-400 w-8 h-8 sm:w-10 sm:h-10" /> Settings
-      </h2>
+    <div className="w-full px-6 py-10 text-gray-900 dark:text-white">
+      <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-10">
+        Account Settings
+      </h1>
 
-      {/* Profile Info */}
-      <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md flex flex-col sm:flex-row items-center sm:items-start gap-6">
-        <div className="flex-shrink-0 flex flex-col items-center sm:items-start">
-          <img
-            src="https://placehold.co/96x96/png"
-            alt="Profile"
-            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-indigo-500 object-cover"
-          />
-          <button className="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition text-sm whitespace-nowrap">
-            Change Picture
+      {/* Profile Info Section */}
+      <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 mb-12">
+        <h2 className="text-xl font-semibold mb-6">Profile Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+          <div className="flex flex-col items-center">
+            <img
+              src="https://placehold.co/100x100"
+              alt="Profile"
+              className="w-24 h-24 rounded-full object-cover border-2 border-indigo-500"
+            />
+            <button className="mt-2 px-4 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
+              Change Picture
+            </button>
+          </div>
+          <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label className="block text-sm font-medium">
+              Full Name
+              <input
+                type="text"
+                name="name"
+                value={user.name}
+                onChange={handleChange}
+                className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              Email Address
+              <input
+                type="email"
+                name="email"
+                value={user.email}
+                onChange={handleChange}
+                className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </label>
+            <label className="block text-sm font-medium col-span-1 sm:col-span-2">
+              Phone Number
+              <input
+                type="text"
+                name="phone"
+                value={user.phone}
+                onChange={handleChange}
+                className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </label>
+          </div>
+        </div>
+        <div className="text-right mt-6">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-md text-white text-sm disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
+      </div>
 
-        <form className="flex-1 space-y-6 w-full max-w-lg">
-          <label className="block">
-            <span className="text-gray-300 font-medium mb-1 block">Full Name</span>
-            <input
-              type="text"
-              name="name"
-              value={user.name}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-300 font-medium mb-1 block">Email Address</span>
-            <input
-              type="email"
-              name="email"
-              value={user.email}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-300 font-medium mb-1 block">Phone Number</span>
-            <input
-              type="text"
-              name="phone"
-              value={user.phone || ""}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-          </label>
-        </form>
-      </section>
-
-      {/* Preferences */}
-      <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md space-y-8">
-        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">Preferences</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <div>
-            <h4 className="text-xl font-semibold mb-4">Notifications</h4>
-            <label className="flex items-center gap-3 mb-3 cursor-pointer">
-              <input type="checkbox" className="form-checkbox h-5 w-5 text-indigo-500" />
-              <span>Email Notifications</span>
-            </label>
-            <label className="flex items-center gap-3 mb-3 cursor-pointer">
-              <input type="checkbox" className="form-checkbox h-5 w-5 text-indigo-500" />
-              <span>Push Notifications</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" className="form-checkbox h-5 w-5 text-indigo-500" />
-              <span>SMS Notifications</span>
-            </label>
-          </div>
-          <div>
-            <h4 className="text-xl font-semibold mb-4">Appearance</h4>
-            <label className="flex items-center gap-3 mb-3 cursor-pointer">
-              <input
-                type="radio"
-                name="theme"
-                className="form-radio h-5 w-5 text-indigo-500"
-                defaultChecked
-              />
-              <span>Dark Mode</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="radio" name="theme" className="form-radio h-5 w-5 text-indigo-500" />
-              <span>Light Mode</span>
-            </label>
-          </div>
+      {/* Password Change Section */}
+      <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-6">Change Password</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {["current", "new", "confirm"].map((key) => {
+            const labels = {
+              current: "Current Password",
+              new: "New Password",
+              confirm: "Confirm New Password",
+            };
+            return (
+              <div key={key} className="relative">
+                <label className="block text-sm font-medium mb-1">
+                  {labels[key]}
+                </label>
+                <input
+                  type={showPassword[key] ? "text" : "password"}
+                  name={key + "Password"}
+                  value={passwordForm[key + "Password"]}
+                  onChange={handlePasswordChange}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm pr-10 focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword((prev) => ({
+                      ...prev,
+                      [key]: !prev[key],
+                    }))
+                  }
+                  className="absolute right-3 top-9 text-gray-500 dark:text-gray-400"
+                >
+                  {showPassword[key] ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            );
+          })}
         </div>
-      </section>
-
-      {/* Security */}
-      <section className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md space-y-6 max-w-lg mx-auto">
-        <h3 className="text-2xl font-semibold border-b border-gray-700 pb-3 mb-6">Security</h3>
-        <label className="block">
-          <span className="text-gray-300 font-medium mb-1 block">Current Password</span>
-          <input
-            type="password"
-            name="currentPassword"
-            value={passwordForm.currentPassword}
-            onChange={handlePasswordChange}
-            className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="••••••••"
-          />
-        </label>
-        <label className="block">
-          <span className="text-gray-300 font-medium mb-1 block">New Password</span>
-          <input
-            type="password"
-            name="newPassword"
-            value={passwordForm.newPassword}
-            onChange={handlePasswordChange}
-            className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="••••••••"
-          />
-        </label>
-        <label className="block">
-          <span className="text-gray-300 font-medium mb-1 block">Confirm New Password</span>
-          <input
-            type="password"
-            name="confirmPassword"
-            value={passwordForm.confirmPassword}
-            onChange={handlePasswordChange}
-            className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="••••••••"
-          />
-        </label>
-        <button
-          onClick={handlePasswordUpdate}
-          className="bg-indigo-600 hover:bg-indigo-700 w-full py-3 rounded-xl font-semibold transition mt-6"
-        >
-          Update Password
-        </button>
-      </section>
-
-      {/* Save All Changes */}
-      <div className="text-center mt-6">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-indigo-600 hover:bg-indigo-700 px-10 py-3 rounded-xl font-extrabold text-lg transition disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save All Changes"}
-        </button>
+        <div className="text-right mt-6">
+          <button
+            onClick={handlePasswordUpdate}
+            className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-md text-white text-sm"
+          >
+            Update Password
+          </button>
+        </div>
       </div>
     </div>
   );
