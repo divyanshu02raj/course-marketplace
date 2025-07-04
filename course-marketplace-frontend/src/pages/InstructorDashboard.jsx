@@ -139,9 +139,7 @@ export default function InstructorDashboard() {
             >
               <Menu size={24} />
             </button>
-            <h2 className="text-xl font-semibold capitalize text-indigo-600 dark:text-indigo-300">
-              {active}
-            </h2>
+
           </div>
 
           <div className="flex items-center gap-6">

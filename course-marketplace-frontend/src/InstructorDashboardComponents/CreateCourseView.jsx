@@ -16,11 +16,38 @@ export default function CreateCourseView() {
     if (file) setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log({ title, shortDesc, description, category, price, thumbnail });
-    alert("Course submitted (dummy action)");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const courseData = {
+    title,
+    shortDesc,
+    description,
+    category,
+    price,
+    status: "draft", // or optional
   };
+
+  try {
+    const response = await fetch("http://localhost:5000/api/courses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // ✅ Send cookies (auth)
+      body: JSON.stringify(courseData),
+    });
+
+    if (!response.ok) throw new Error("Failed to create course");
+
+    const result = await response.json();
+    console.log("✅ Course created:", result);
+    alert("Course created successfully!");
+  } catch (err) {
+    console.error("❌ Error:", err.message);
+    alert("Failed to create course");
+  }
+};
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-12 py-8">

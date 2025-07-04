@@ -19,6 +19,14 @@ const EarningsView = () => {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-12 py-8 space-y-10 text-gray-900 dark:text-white">
+      <div className="mb-8">
+  <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+    <DollarSign className="w-6 h-6" /> Instructor Earnings
+  </h2>
+  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+    Overview of your course earnings and recent transactions.
+  </p>
+</div>
       {/* Total Earnings */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-6 rounded-2xl shadow-sm">
         <h2 className="text-xl font-semibold text-indigo-600 dark:text-indigo-400 mb-4">Total Earnings</h2>
