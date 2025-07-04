@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Edit, Trash2, Eye } from "lucide-react";
 
-// ✅ Place at the top, outside component
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+//  http://localhost:5000   https://course-marketplace-backend.onrender.com
 
 export default function InstructorCoursesView() {
   const [courses, setCourses] = useState([]);
@@ -10,7 +9,7 @@ export default function InstructorCoursesView() {
   const [loading, setLoading] = useState(true);
 
    useEffect(() => {
-    fetch(`${API_BASE_URL}/api/courses/my`, {
+    fetch(`https://course-marketplace-backend.onrender.com/api/courses/my`, {
       credentials: "include",
     })
       .then((res) => {
