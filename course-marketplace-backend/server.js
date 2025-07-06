@@ -14,24 +14,22 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://course-marketplace-ten.vercel.app"
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
+      // Allow requests with no origin (like mobile apps, curl, postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        return callback(new Error("CORS not allowed for this origin"));
       }
     },
-    credentials: true,
+    credentials: true, // ✅ Required to send cookies
   })
 );
-
 
 // ✅ Global middleware
 app.use(express.json());
