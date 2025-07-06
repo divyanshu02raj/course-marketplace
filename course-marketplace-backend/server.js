@@ -1,3 +1,4 @@
+// course-marketplace-backend\server.js
 const express = require("express");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
@@ -13,17 +14,24 @@ connectDB();
 
 const app = express();
 
-const allowedOrigin = "https://course-marketplace-ten.vercel.app" ;
-  // process.env.NODE_ENV === "production"
-  //   ? "https://course-marketplace-ten.vercel.app"
-  //   : "http://localhost:3000";
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://course-marketplace-ten.vercel.app"
+];
 
 app.use(
   cors({
-    origin: allowedOrigin,
-    credentials: true, // ✅ Required for cookies
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   })
 );
+
 
 // ✅ Global middleware
 app.use(express.json());

@@ -1,5 +1,7 @@
+// course-marketplace-frontend\src\InstructorDashboardComponents\InstructorCoursesView.jsx
 import { useEffect, useState } from "react";
 import { Edit, Trash2, Eye } from "lucide-react";
+import { API_BASE_URL } from "../config";
 
 //  http://localhost:5000   https://course-marketplace-backend.onrender.com
 
@@ -9,7 +11,7 @@ export default function InstructorCoursesView() {
   const [loading, setLoading] = useState(true);
 
    useEffect(() => {
-    fetch(`https://course-marketplace-backend.onrender.com/api/courses/my`, {
+    fetch(`${API_BASE_URL}/api/courses/my`, {
       credentials: "include",
     })
       .then((res) => {

@@ -1,5 +1,8 @@
+//course-marketplace-frontend\src\InstructorDashboardComponents\CreateCourseView.jsx
+
 import { useState } from "react";
 import { UploadCloud } from "lucide-react";
+import { API_BASE_URL } from "../config";
 
 export default function CreateCourseView() {
   const [title, setTitle] = useState("");
@@ -31,7 +34,7 @@ const handleSubmit = async (e) => {
   //  http://localhost:5000   https://course-marketplace-backend.onrender.com
 
   try {
-    const response = await fetch("https://course-marketplace-backend.onrender.com/api/courses", {
+    const response = await fetch(`${API_BASE_URL}/api/courses`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
