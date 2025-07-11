@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\InstructorDashboardComponents\DashboardView.jsx
 import { TrendingUp, DollarSign, Users, FileText } from "lucide-react";
 import {
   LineChart,

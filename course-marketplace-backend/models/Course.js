@@ -12,7 +12,11 @@ const CourseSchema = new mongoose.Schema({
   description: String,
   category: String,
   price: Number,
-  thumbnail: String,
+  thumbnail: {
+  type: String,
+  default: "",
+},
+
   status: {
     type: String,
     enum: ["draft", "published", "unpublished"],

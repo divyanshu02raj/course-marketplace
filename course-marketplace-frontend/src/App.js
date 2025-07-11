@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\App.js
 import { Routes, Route, BrowserRouter as Router } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";

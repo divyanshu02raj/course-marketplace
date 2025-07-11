@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\StudentDashboardComponents\DashboardView.jsx
 import React from "react";
 import { BookOpen, Calendar, Award, MessageSquare } from "lucide-react";
 

@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\InstructorDashboardComponents\SettingsView.jsx
 import React, { useEffect, useState } from "react";
 import axios from "../api/axios";
 import { Eye, EyeOff } from "lucide-react";

@@ -12,6 +12,8 @@ export default function CreateCourseView() {
   const [price, setPrice] = useState("");
   const [thumbnail, setThumbnail] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [loading, setLoading] = useState(false); // 🆕 loading state
+const [errors, setErrors] = useState({});
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
@@ -19,27 +21,57 @@ export default function CreateCourseView() {
     if (file) setPreviewUrl(URL.createObjectURL(file));
   };
 
-const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
   e.preventDefault();
+  setLoading(true);
 
-  const courseData = {
-    title,
-    shortDesc,
-    description,
-    category,
-    price,
-    status: "draft", // or optional
-  };
+  // Basic validation
+  const newErrors = {};
+  if (!title.trim()) newErrors.title = "Please enter a course title.";
+  if (!shortDesc.trim()) newErrors.shortDesc = "Please enter a short description.";
+  if (!description.trim()) newErrors.description = "Please enter a detailed description.";
+  if (!category) newErrors.category = "Please select a category.";
+  if (!price || Number(price) < 0) newErrors.price = "Please enter a valid price.";
 
-  //  http://localhost:5000   https://course-marketplace-backend.onrender.com
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    setLoading(false);
+    return;
+  }
+
+  setErrors({}); // clear errors
+
+  let thumbnailUrl = "";
 
   try {
+    if (thumbnail) {
+      const formData = new FormData();
+      formData.append("file", thumbnail);
+      formData.append("upload_preset", "course_thumbnails");
+
+      const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/dg05wkeqo/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const cloudData = await cloudRes.json();
+      thumbnailUrl = cloudData.secure_url;
+    }
+
+    const courseData = {
+      title,
+      shortDesc,
+      description,
+      category,
+      price,
+      thumbnail: thumbnailUrl,
+      status: "draft",
+    };
+
     const response = await fetch(`${API_BASE_URL}/api/courses`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // ✅ Send cookies (auth)
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(courseData),
     });
 
@@ -48,11 +80,23 @@ const handleSubmit = async (e) => {
     const result = await response.json();
     console.log("✅ Course created:", result);
     alert("Course created successfully!");
+
+    // Reset form
+    setTitle("");
+    setShortDesc("");
+    setDescription("");
+    setCategory("");
+    setPrice("");
+    setThumbnail(null);
+    setPreviewUrl(null);
   } catch (err) {
     console.error("❌ Error:", err.message);
     alert("Failed to create course");
+  } finally {
+    setLoading(false);
   }
 };
+
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-12 py-8">
@@ -71,6 +115,8 @@ const handleSubmit = async (e) => {
               onChange={(e) => setTitle(e.target.value)}
               required
             />
+            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Short Description</label>
@@ -82,6 +128,8 @@ const handleSubmit = async (e) => {
               onChange={(e) => setShortDesc(e.target.value)}
               required
             />
+            {errors.shortDesc && <p className="text-red-500 text-sm mt-1">{errors.shortDesc}</p>}
+
           </div>
         </div>
 
@@ -96,6 +144,7 @@ const handleSubmit = async (e) => {
             onChange={(e) => setDescription(e.target.value)}
             required
           ></textarea>
+          {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
         </div>
 
         {/* Category + Price */}
@@ -114,6 +163,7 @@ const handleSubmit = async (e) => {
               <option value="marketing">Marketing</option>
               <option value="ai">Artificial Intelligence</option>
             </select>
+            {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Price (USD)</label>
@@ -127,6 +177,8 @@ const handleSubmit = async (e) => {
               onChange={(e) => setPrice(e.target.value)}
               required
             />
+            {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+
           </div>
         </div>
 
@@ -145,6 +197,8 @@ const handleSubmit = async (e) => {
                 </div>
               )}
               <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
+              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+
             </label>
 
             {thumbnail && (
@@ -155,13 +209,40 @@ const handleSubmit = async (e) => {
           </div>
         </div>
 
-        {/* Submit */}
+          {/* Submit */}
         <div>
           <button
             type="submit"
-            className="inline-block px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition"
+            disabled={loading}
+            className="inline-flex items-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition disabled:opacity-50"
           >
-            🎉 Submit Course
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin mr-2 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                Submitting...
+              </>
+            ) : (
+              "🎉 Submit Course"
+            )}
           </button>
         </div>
       </form>

@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\InstructorDashboardComponents\MessagesView.jsx
 import React, { useState } from "react";
 import { MessageSquare } from "lucide-react";
 

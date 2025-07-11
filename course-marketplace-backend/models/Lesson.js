@@ -14,10 +14,11 @@ const LessonSchema = new mongoose.Schema({
   videoUrl: String,
   notes: String,
   order: Number,
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  duration: Number, // in minutes (optional)
+  isPreview: {
+    type: Boolean,
+    default: false, // lesson is not a free preview by default
   },
-});
+}, { timestamps: true }); // adds createdAt and updatedAt automatically
 
 module.exports = mongoose.model("Lesson", LessonSchema);

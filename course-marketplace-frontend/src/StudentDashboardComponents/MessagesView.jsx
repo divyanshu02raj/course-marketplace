@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\StudentDashboardComponents\MessagesView.jsx
 import React, { useState } from "react";
 import { MessageSquare, Paperclip, Send, X } from "lucide-react";
 

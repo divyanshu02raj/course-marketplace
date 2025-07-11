@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\pages\Landing.jsx
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { GraduationCap, Video, Star, Users } from "lucide-react";

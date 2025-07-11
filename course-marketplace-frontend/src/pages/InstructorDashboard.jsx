@@ -1,3 +1,4 @@
+// course-marketplace-frontend/src/pages/InstructorDashboard.jsx
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -69,6 +70,7 @@ export default function InstructorDashboard() {
     { label: "Earnings", icon: <DollarSign />, key: "earnings" },
     { label: "Messages", icon: <MessageSquare />, key: "messages" },
     { label: "Settings", icon: <Settings />, key: "settings" },
+    
   ];
 
   const unreadCount = notifications.filter((note) => !note.read).length;

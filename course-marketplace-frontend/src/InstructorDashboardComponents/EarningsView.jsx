@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\InstructorDashboardComponents\EarningsView.jsx
 import React from 'react';
 import { DollarSign, ArrowUpRight } from 'lucide-react';
 

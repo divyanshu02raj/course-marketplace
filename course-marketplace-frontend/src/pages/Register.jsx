@@ -21,6 +21,7 @@ export default function Register() {
     phone: "", 
   });
   const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(false); // State to show/hide password
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -105,31 +106,82 @@ export default function Register() {
   />
 </div>
 
-
-          <div>
+ <div>
             <label className="block text-sm mb-1 text-gray-300">Password</label>
-            <input
-              name="password"
-              type="password"
-              onChange={handleChange}
-              required
-              placeholder="••••••••"
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+            <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"} // Toggle between text and password
+                onChange={handleChange}
+                required
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 focus:outline-none"
+              >
+                {showPassword ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 12c0 2.21-1.79 4-4 4s-4-1.79-4-4 1.79-4 4-4 4 1.79 4 4z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M2.458 12C3.732 7.943 7.936 5 12 5c4.064 0 8.268 2.943 9.542 7-1.274 4.057-5.478 7-9.542 7-4.064 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 12c0 2.21-1.79 4-4 4s-4-1.79-4-4 1.79-4 4-4 4 1.79 4 4z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M2.458 12C3.732 7.943 7.936 5 12 5c4.064 0 8.268 2.943 9.542 7-1.274 4.057-5.478 7-9.542 7-4.064 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm mb-1 text-gray-300">Register as</label>
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-800 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="student" className="text-black">Student</option>
-              <option value="instructor" className="text-black">Instructor</option>
-            </select>
-          </div>
+<div>
+  <label className="block text-sm mb-1 text-gray-300">Register as</label>
+  <select
+    name="role"
+    value={form.role}
+    onChange={handleChange}
+    className="w-full px-4 py-3 bg-gray-700 text-white border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  >
+    <option value="student" className="text-black">Student</option>
+    <option value="instructor" className="text-black">Instructor</option>
+  </select>
+</div>
+
 
           <button
             type="submit"
@@ -145,6 +197,19 @@ export default function Register() {
             Log in
           </a>
         </p>
+
+
+<div className="mt-6 text-center">
+  <button
+    type="button"
+    onClick={() => navigate("/")}
+    className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-400 rounded-lg text-white font-semibold shadow-md transform hover:scale-105 hover:translate-y-1 hover:shadow-lg hover:shadow-indigo-500 hover:text-gray-100 hover:animate-bounce transition-all duration-300 ease-in-out"
+  >
+    ← Back to Home
+  </button>
+</div>
+
+
       </motion.div>
     </div>
   );

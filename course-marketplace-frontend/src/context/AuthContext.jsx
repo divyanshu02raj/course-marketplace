@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\context\AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "../api/axios";
 

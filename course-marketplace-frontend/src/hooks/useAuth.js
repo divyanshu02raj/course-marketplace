@@ -1,4 +1,4 @@
-// src/hooks/useAuth.js or useAuth.ts
+// src/hooks/useAuth.js
 import { useEffect, useState } from "react";
 import axios from "axios";
 
