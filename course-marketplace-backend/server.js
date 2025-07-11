@@ -14,12 +14,20 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
+
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production"
-      ? process.env.ALLOWED_ORIGINS
-      : "http://localhost:3000",
-    credentials: true,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("CORS not allowed for this origin"));
+      }
+    },
+    credentials: true, // ✅ Required to send cookies
   })
 );
 
