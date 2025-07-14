@@ -17,7 +17,7 @@ import {
   Moon,
 } from "lucide-react";
 
-import useTheme from "../hooks/useTheme"; // ✅ Theme toggle hook
+import useTheme from "../hooks/useTheme";
 
 import DashboardView from "../InstructorDashboardComponents/DashboardView";
 import CreateCourseView from "../InstructorDashboardComponents/CreateCourseView";
@@ -31,15 +31,13 @@ export default function InstructorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
-
-  const { theme, toggleTheme } = useTheme(); // ✅ Using theme hook
+  const { theme, toggleTheme } = useTheme();
 
   const [notifications, setNotifications] = useState([
     { title: "New course approval", time: "5 min ago", read: false },
     { title: "Student feedback received", time: "1 hour ago", read: false },
     { title: "Payment received for your course", time: "2 hours ago", read: true },
   ]);
-
   const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = () => {
@@ -70,7 +68,6 @@ export default function InstructorDashboard() {
     { label: "Earnings", icon: <DollarSign />, key: "earnings" },
     { label: "Messages", icon: <MessageSquare />, key: "messages" },
     { label: "Settings", icon: <Settings />, key: "settings" },
-    
   ];
 
   const unreadCount = notifications.filter((note) => !note.read).length;
@@ -83,7 +80,6 @@ export default function InstructorDashboard() {
         fixed md:relative h-full md:h-auto
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
-        {/* Close button */}
         <div className="flex md:hidden justify-end mb-4">
           <button
             onClick={() => setSidebarOpen(false)}
@@ -122,7 +118,6 @@ export default function InstructorDashboard() {
         </button>
       </aside>
 
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 z-20 md:hidden"
@@ -132,7 +127,6 @@ export default function InstructorDashboard() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
         <header className="flex justify-between items-center px-4 md:px-8 py-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm">
           <div className="flex items-center gap-4">
             <button
@@ -141,7 +135,6 @@ export default function InstructorDashboard() {
             >
               <Menu size={24} />
             </button>
-
           </div>
 
           <div className="flex items-center gap-6">
@@ -200,23 +193,14 @@ export default function InstructorDashboard() {
               )}
             </button>
 
-            {/* User */}
-            <div className="flex items-center gap-2">
-              <img
-                src={user.profileImage}
-                alt="Avatar"
-                className="w-8 h-8 rounded-full"
-              />
-              {user?.name ? (
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Hi, {user.name}
-                </span>
-              ) : (
-                <span className="text-sm text-gray-400 italic animate-pulse">
-                  Loading name...
-                </span>
-              )}
-            </div>
+            {/* User Avatar (No Flicker) */}
+            {/* User name */}
+{user && (
+  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+    Welcome, {user.name || "Instructor"}
+  </span>
+)}
+
           </div>
         </header>
 

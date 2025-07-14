@@ -1,264 +1,216 @@
 // course-marketplace-frontend\src\InstructorDashboardComponents\InstructorCoursesView.jsx
-import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
+import { Edit, Trash2, Eye, RefreshCw } from "lucide-react";
+import { API_BASE_URL } from "../config";
 import { useNavigate } from "react-router-dom";
-import {
-  Home,
-  BookOpen,
-  PlusCircle,
-  DollarSign,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Bell,
-  Menu,
-  X,
-  Sun,
-  Moon,
-} from "lucide-react";
 
-import useTheme from "../hooks/useTheme"; // ✅ Theme toggle hook
-
-import DashboardView from "../InstructorDashboardComponents/DashboardView";
-import CreateCourseView from "../InstructorDashboardComponents/CreateCourseView";
-import InstructorCoursesView from "../InstructorDashboardComponents/InstructorCoursesView";
-import EarningsView from "../InstructorDashboardComponents/EarningsView";
-import MessagesView from "../InstructorDashboardComponents/MessagesView";
-import SettingsView from "../InstructorDashboardComponents/SettingsView";
-
-export default function InstructorDashboard() {
-  const [active, setActive] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout, loading } = useAuth();
+export default function InstructorCoursesView() {
+  const [courses, setCourses] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [togglingCourseId, setTogglingCourseId] = useState(null);
   const navigate = useNavigate();
 
-  const { theme, toggleTheme } = useTheme(); // ✅ Using theme hook
+  // 📦 Fetch courses
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/courses/my`, {
+      credentials: "include",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch courses");
+        return res.json();
+      })
+      .then((data) => setCourses(data))
+      .catch((err) => {
+        console.error("Error:", err);
+        setError("Failed to load courses. Please try again.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  const [notifications, setNotifications] = useState([
-    { title: "New course approval", time: "5 min ago", read: false },
-    { title: "Student feedback received", time: "1 hour ago", read: false },
-    { title: "Payment received for your course", time: "2 hours ago", read: true },
-  ]);
+  // 🧭 Navigation handlers
+  const handleView = (id) => navigate(`/instructor/course/${id}`);
+  const handleEdit = (id) => navigate(`/instructor/course/edit/${id}`);
 
-  const [showNotifications, setShowNotifications] = useState(false);
-
-  // Flag to track if image has been loaded
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false); // Flag for image error handling
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  // ❌ Delete course
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this course?")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/courses/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      setCourses((prev) => prev.filter((c) => c._id !== id));
+    } catch (err) {
+      console.error("Delete failed:", err);
+      setError("Could not delete course. Try again later.");
+    }
   };
 
-  // Show loading spinner if the data is still loading or image is not loaded
-  if (loading || !imageLoaded) {
-    return (
-      <div className="h-screen flex items-center justify-center text-gray-400">
-        Loading...
-      </div>
-    );
-  }
-
-  // Show message if the user is logged out
-  if (!user) {
-    return (
-      <div className="h-screen flex items-center justify-center text-gray-400">
-        You are logged out.
-      </div>
-    );
-  }
-
-  const menu = [
-    { label: "Dashboard", icon: <Home />, key: "dashboard" },
-    { label: "My Courses", icon: <BookOpen />, key: "courses" },
-    { label: "Create Course", icon: <PlusCircle />, key: "create" },
-    { label: "Earnings", icon: <DollarSign />, key: "earnings" },
-    { label: "Messages", icon: <MessageSquare />, key: "messages" },
-    { label: "Settings", icon: <Settings />, key: "settings" },
-  ];
-
-  const unreadCount = notifications.filter((note) => !note.read).length;
-
-  // Handle image load event to update the state
-  const handleImageLoad = () => {
-    setImageLoaded(true); // Set image as loaded once it's finished loading
+  // 🔁 Toggle publish/draft
+  const toggleStatus = async (id, currentStatus) => {
+    const newStatus = currentStatus === "published" ? "draft" : "published";
+    setTogglingCourseId(id);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/courses/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error("Status update failed");
+      const updated = await res.json();
+      setCourses((prev) =>
+        prev.map((course) =>
+          course._id === id ? { ...course, status: updated.status } : course
+        )
+      );
+    } catch (err) {
+      console.error("Status update failed:", err);
+      setError("Could not update course status.");
+    } finally {
+      setTogglingCourseId(null);
+    }
   };
 
-  // Handle image error event
-  const handleImageError = () => {
-    setImageError(true); // Set error flag if the image fails to load
-    setImageLoaded(true); // Ensure that image is marked as loaded even if error happens
-  };
-
-  // If image URL is still loading or not available, show a fallback avatar
-  const profileImageUrl = user?.profileImage || "";
+  // 🔍 Filter courses
+  const filteredCourses = courses.filter((course) => {
+    if (activeFilter === "all") return true;
+    return course.status.toLowerCase() === activeFilter;
+  });
 
   return (
-    <div className="h-screen flex overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-white">
-      {/* Sidebar */}
-      <aside
-        className={`w-64 bg-gray-100 dark:bg-gray-950 border-r border-gray-200 dark:border-white/10 p-6 z-30 transform transition-transform duration-300 ease-in-out
-        fixed md:relative h-full md:h-auto
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
-      >
-        {/* Close button */}
-        <div className="flex md:hidden justify-end mb-4">
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="text-gray-700 dark:text-white hover:text-black dark:hover:text-gray-300"
-          >
-            <X size={24} />
-          </button>
-        </div>
+    <div className="w-full px-4 sm:px-6 lg:px-12 py-8 text-gray-900 dark:text-white">
+      <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
+        📚 Your Courses
+      </h2>
+      <p className="text-gray-600 dark:text-gray-400 mb-6">
+        Here you can manage all your created courses.
+      </p>
 
-        <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-8">🎓 CourseHub</h1>
-        <nav className="flex-1 space-y-4 overflow-y-auto">
-          {menu.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => {
-                setActive(item.key);
-                setSidebarOpen(false);
-              }}
-              className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all w-full text-left ${
-                active === item.key
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800"
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        <button
-          onClick={handleLogout}
-          className="mt-8 flex items-center gap-3 text-sm text-red-500 hover:text-red-400"
-        >
-          <LogOut size={18} /> Logout
-        </button>
-      </aside>
-
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-20 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
+      {/* ⚠️ Error */}
+      {error && (
+        <div className="text-red-600 dark:text-red-400 text-sm mb-6">{error}</div>
       )}
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="flex justify-between items-center px-4 md:px-8 py-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm">
-          <div className="flex items-center gap-4">
-            <button
-              className="md:hidden text-gray-700 dark:text-white"
-              onClick={() => setSidebarOpen(true)}
+      {/* 🔘 Filters */}
+      <div className="flex items-center gap-4 mb-8">
+        {["all", "published", "draft"].map((filter) => (
+          <button
+            key={filter}
+            onClick={() => setActiveFilter(filter)}
+            className={`px-4 py-2 rounded-lg text-sm transition font-medium ${
+              activeFilter === filter
+                ? filter === "published"
+                  ? "bg-green-600 text-white"
+                  : filter === "draft"
+                  ? "bg-yellow-600 text-white"
+                  : "bg-indigo-600 text-white"
+                : "text-gray-500 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400"
+            }`}
+          >
+            {filter === "all"
+              ? "All Courses"
+              : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Courses`}
+          </button>
+        ))}
+      </div>
+
+      {/* 📋 Course List */}
+      {loading ? (
+        <p className="text-gray-500 dark:text-gray-400 italic">Loading...</p>
+      ) : filteredCourses.length === 0 ? (
+        <p className="text-gray-500 dark:text-gray-400 italic">
+          No courses to display.
+        </p>
+      ) : (
+        <div className="space-y-5">
+          {filteredCourses.map((course) => (
+            <div
+              key={course._id}
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow hover:shadow-md transition"
             >
-              <Menu size={24} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-6">
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2"
-              >
-                <Bell className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white w-6 h-6" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute top-full left-1/2 -translate-x-[60%] mt-2 w-[90vw] max-w-xs bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 sm:left-auto sm:right-0 sm:translate-x-0 sm:w-80">
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 font-semibold">
-                    Notifications
+              <div className="flex justify-between items-start gap-6">
+                {/* 📸 Thumbnail */}
+                {course.thumbnailUrl ? (
+                  <img
+                    src={course.thumbnailUrl}
+                    alt={course.title}
+                    className="w-32 h-20 object-cover rounded-md border"
+                  />
+                ) : (
+                  <div className="w-32 h-20 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-xs text-gray-400 rounded-md border">
+                    No Thumbnail
                   </div>
-                  <ul className="max-h-60 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
-                    {notifications.length ? (
-                      notifications.map((note, i) => (
-                        <li
-                          key={i}
-                          className="p-4 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-800 dark:text-gray-300"
-                        >
-                          <p className="text-black dark:text-white font-medium">
-                            {note.title}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {note.time}
-                          </p>
-                        </li>
-                      ))
-                    ) : (
-                      <li className="p-4 text-gray-500 text-sm text-center">No notifications</li>
-                    )}
-                  </ul>
-                  <div className="p-3 text-center text-sm border-t border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
-                    View All
+                )}
+
+                {/* 📝 Course Details */}
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold mb-1">{course.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {course.shortDesc}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
+                    <span>
+                      📅 Created on{" "}
+                      {new Date(course.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+
+                    {/* 🔁 Status Badge */}
+                    <button
+                      onClick={() => toggleStatus(course._id, course.status.toLowerCase())}
+                      className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full transition ${
+                        course.status.toLowerCase() === "published"
+                          ? "bg-green-100 dark:bg-green-600 text-green-800 dark:text-white"
+                          : "bg-yellow-100 dark:bg-yellow-600 text-yellow-800 dark:text-white"
+                      } ${togglingCourseId === course._id ? "opacity-50 pointer-events-none" : ""}`}
+                      title="Click to toggle status"
+                      disabled={togglingCourseId === course._id}
+                    >
+                      <RefreshCw size={12} className="shrink-0" />
+                      {togglingCourseId === course._id ? "Updating..." : course.status.toLowerCase()}
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-            >
-              {theme === "dark" ? (
-                <Sun className="w-5 h-5 text-yellow-400" />
-              ) : (
-                <Moon className="w-5 h-5 text-blue-600" />
-              )}
-            </button>
-
-            {/* User */}
-            <div className="flex items-center gap-2">
-              {/* Profile image */}
-              <div className="relative">
-                {imageError ? (
-                  <div className="w-8 h-8 bg-gray-200 rounded-full" />
-                ) : (
-                  !imageLoaded && <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-                )}
-                <img
-                  src={profileImageUrl}
-                  alt="Avatar"
-                  className={`w-8 h-8 rounded-full ${!imageLoaded ? "opacity-0" : "opacity-100"}`}
-                  onLoad={handleImageLoad}
-                  onError={handleImageError}
-                />
+                {/* 🛠️ Actions */}
+                <div className="flex gap-3 text-gray-500 dark:text-gray-300 mt-2 lg:mt-0">
+                  <button
+                    onClick={() => handleView(course._id)}
+                    aria-label="View Course"
+                    title="View Course"
+                    className="hover:text-blue-600"
+                  >
+                    <Eye size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleEdit(course._id)}
+                    aria-label="Edit Course"
+                    title="Edit Course"
+                    className="hover:text-yellow-500"
+                  >
+                    <Edit size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(course._id)}
+                    aria-label="Delete Course"
+                    title="Delete Course"
+                    className="hover:text-red-500"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
               </div>
-
-              {user?.name ? (
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Hi, {user.name}
-                </span>
-              ) : (
-                <span className="text-sm text-gray-400 italic animate-pulse">
-                  Loading name...
-                </span>
-              )}
             </div>
-          </div>
-        </header>
-
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-white text-black dark:bg-gray-900 dark:text-white">
-          {active === "dashboard" && <DashboardView />}
-          {active === "create" && <CreateCourseView />}
-          {active === "courses" && <InstructorCoursesView />}
-          {active === "earnings" && <EarningsView />}
-          {active === "messages" && <MessagesView />}
-          {active === "settings" && <SettingsView />}
-        </main>
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

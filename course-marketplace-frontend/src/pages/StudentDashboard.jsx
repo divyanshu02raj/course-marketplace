@@ -365,22 +365,12 @@ const sortedCourses = filteredCourses.sort((a, b) => {
         </button>
 
         {/* User */}
-        <div className="flex items-center gap-2">
-          <img
-            src={user.profileImage}
-            alt="Avatar"
-            className="w-8 h-8 rounded-full"
-          />
-          {user?.name ? (
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              Hi, {user.name}
-            </span>
-          ) : (
-            <span className="text-sm text-gray-400 italic animate-pulse">
-              Loading name...
-            </span>
-          )}
-        </div>
+{user && (
+  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+    Welcome, {user.name || "Instructor"}
+  </span>
+)}
+
       </div>
     </header>
 

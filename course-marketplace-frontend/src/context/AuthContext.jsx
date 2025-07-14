@@ -1,4 +1,4 @@
-// course-marketplace-frontend\src\context\AuthContext.jsx
+// course-marketplace-frontend/src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "../api/axios";
 
@@ -6,35 +6,41 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Start true to block rendering
 
-  const login = (userData) => setUser(userData);
-const logout = async () => {
-  try {
-    await axios.post("/auth/logout", {}, { withCredentials: true }); // <-- include credentials
-  } catch (err) {
-    console.error("Logout failed:", err);
-  } finally {
-    setUser(null); // Clear local state regardless
-  }
-};
+  const login = (userData) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
 
-
-
-useEffect(() => {
-  const fetchUser = async () => {
+  const logout = async () => {
     try {
-      const res = await axios.get("/auth/me");
-      console.log("Fetched user:", res.data.user); // <-- Add this line
-      setUser(res.data.user);
-    } catch {
-      setUser(null);
+      await axios.post("/auth/logout", {}, { withCredentials: true });
+    } catch (err) {
+      console.error("Logout failed:", err);
     } finally {
-      setLoading(false);
+      setUser(null);
+      localStorage.removeItem("user");
     }
   };
 
-  fetchUser();
+useEffect(() => {
+  const validateSession = async () => {
+    setLoading(true); // ensure loading is true during check
+    try {
+      const res = await axios.get("/auth/me", { withCredentials: true });
+      setUser(res.data.user);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+    } catch (err) {
+      console.warn("Session invalid, logging out...");
+      setUser(null);
+      localStorage.removeItem("user");
+    } finally {
+      setLoading(false); // done checking
+    }
+  };
+
+  validateSession();
 }, []);
 
 
@@ -45,5 +51,4 @@ useEffect(() => {
   );
 };
 
-// ✅ This is required for components to consume AuthContext
 export const useAuth = () => useContext(AuthContext);
