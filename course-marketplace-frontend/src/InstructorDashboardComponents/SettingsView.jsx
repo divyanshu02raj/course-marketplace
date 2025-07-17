@@ -1,6 +1,7 @@
-// course-marketplace-frontend\src\InstructorDashboardComponents\SettingsView.jsx
+// src/InstructorDashboardComponents/SettingsView.jsx
 import React, { useEffect, useState } from "react";
-import axios from "../api/axios";
+import axios from "../api/axios"; // Our custom instance for the backend
+import baseAxios from "axios"; // Base axios for external calls like Cloudinary
 import { Eye, EyeOff } from "lucide-react";
 
 const CLOUD_NAME = "dg05wkeqo";
@@ -89,11 +90,8 @@ const InstructorSettingsView = () => {
     formData.append("upload_preset", UPLOAD_PRESET);
 
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
+      const res = await baseAxios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, formData);
+      const data = res.data;
       if (data.secure_url) {
         setUser((prev) => ({ ...prev, profileImage: data.secure_url }));
         alert("Image uploaded. Click Save Changes to apply.");
@@ -117,8 +115,7 @@ const InstructorSettingsView = () => {
       <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-10">
         Instructor Settings
       </h1>
-
-      {/* Profile Info Section */}
+      {/* The rest of the JSX remains the same */}
       <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 mb-12">
         <h2 className="text-xl font-semibold mb-6">Profile Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
@@ -179,7 +176,6 @@ const InstructorSettingsView = () => {
         </div>
       </div>
 
-      {/* Password Change Section */}
       <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-6">Change Password</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

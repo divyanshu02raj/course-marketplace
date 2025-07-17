@@ -1,18 +1,13 @@
 // controllers/courseController.js
 const Course = require("../models/Course");
+const cloudinary = require('cloudinary').v2; // Keep the import, but remove the config block
 
-// Instead of "import"
-const cloudinary = require('cloudinary').v2;
+// The cloudinary.config block has been moved to config/cloudinary.js
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 // Create a new course
 const createCourse = async (req, res) => {
   try {
-const thumbnailUrl = req.body.thumbnail || "";
+    const thumbnailUrl = req.body.thumbnail || "";
 
     const course = new Course({
       ...req.body,
@@ -23,11 +18,10 @@ const thumbnailUrl = req.body.thumbnail || "";
     await course.save();
     res.status(201).json(course);
   } catch (err) {
-    console.error("Cloudinary upload or course creation failed:", err);
+    console.error("Course creation failed:", err);
     res.status(400).json({ message: err.message });
   }
 };
-
 
 // Get all courses by the logged-in instructor
 const getMyCourses = async (req, res) => {
@@ -67,7 +61,7 @@ const updateCourse = async (req, res) => {
   }
 };
 
-// ✅ Toggle published/draft status
+// Toggle published/draft status
 const updateCourseStatus = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -76,7 +70,6 @@ const updateCourseStatus = async (req, res) => {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    // ✅ Check if the logged-in user is the course owner
     if (course.instructor.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to update this course" });
     }
@@ -114,7 +107,6 @@ module.exports = {
   getMyCourses,
   getCourseById,
   updateCourse,
-  updateCourseStatus, // ✅ Added this line
+  updateCourseStatus,
   deleteCourse,
 };
-

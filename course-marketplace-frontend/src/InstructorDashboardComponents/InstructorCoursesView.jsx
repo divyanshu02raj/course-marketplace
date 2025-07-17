@@ -1,7 +1,7 @@
-// course-marketplace-frontend\src\InstructorDashboardComponents\InstructorCoursesView.jsx
+// src/InstructorDashboardComponents/InstructorCoursesView.jsx
 import { useEffect, useState } from "react";
 import { Edit, Trash2, Eye, RefreshCw } from "lucide-react";
-import { API_BASE_URL } from "../config";
+import axios from "../api/axios"; // Import our custom axios instance
 import { useNavigate } from "react-router-dom";
 
 export default function InstructorCoursesView() {
@@ -12,36 +12,31 @@ export default function InstructorCoursesView() {
   const [togglingCourseId, setTogglingCourseId] = useState(null);
   const navigate = useNavigate();
 
-  // 📦 Fetch courses
+  // 📦 Fetch courses using Axios
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/courses/my`, {
-      credentials: "include",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch courses");
-        return res.json();
-      })
-      .then((data) => setCourses(data))
-      .catch((err) => {
+    const fetchCourses = async () => {
+      try {
+        const response = await axios.get("/courses/my");
+        setCourses(response.data);
+      } catch (err) {
         console.error("Error:", err);
         setError("Failed to load courses. Please try again.");
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
   }, []);
 
   // 🧭 Navigation handlers
   const handleView = (id) => navigate(`/instructor/course/${id}`);
   const handleEdit = (id) => navigate(`/instructor/course/edit/${id}`);
 
-  // ❌ Delete course
+  // ❌ Delete course using Axios
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this course?")) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/courses/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Delete failed");
+      await axios.delete(`/courses/${id}`);
       setCourses((prev) => prev.filter((c) => c._id !== id));
     } catch (err) {
       console.error("Delete failed:", err);
@@ -49,19 +44,13 @@ export default function InstructorCoursesView() {
     }
   };
 
-  // 🔁 Toggle publish/draft
+  // 🔁 Toggle publish/draft using Axios
   const toggleStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === "published" ? "draft" : "published";
     setTogglingCourseId(id);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/courses/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error("Status update failed");
-      const updated = await res.json();
+      const response = await axios.patch(`/courses/${id}/status`, { status: newStatus });
+      const updated = response.data;
       setCourses((prev) =>
         prev.map((course) =>
           course._id === id ? { ...course, status: updated.status } : course
@@ -90,12 +79,12 @@ export default function InstructorCoursesView() {
         Here you can manage all your created courses.
       </p>
 
-      {/* ⚠️ Error */}
+      {/* Error Display */}
       {error && (
         <div className="text-red-600 dark:text-red-400 text-sm mb-6">{error}</div>
       )}
 
-      {/* 🔘 Filters */}
+      {/* Filters */}
       <div className="flex items-center gap-4 mb-8">
         {["all", "published", "draft"].map((filter) => (
           <button
@@ -118,7 +107,7 @@ export default function InstructorCoursesView() {
         ))}
       </div>
 
-      {/* 📋 Course List */}
+      {/* Course List */}
       {loading ? (
         <p className="text-gray-500 dark:text-gray-400 italic">Loading...</p>
       ) : filteredCourses.length === 0 ? (
@@ -133,10 +122,10 @@ export default function InstructorCoursesView() {
               className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow hover:shadow-md transition"
             >
               <div className="flex justify-between items-start gap-6">
-                {/* 📸 Thumbnail */}
-                {course.thumbnailUrl ? (
+                {/* Thumbnail */}
+                {course.thumbnail ? (
                   <img
-                    src={course.thumbnailUrl}
+                    src={course.thumbnail}
                     alt={course.title}
                     className="w-32 h-20 object-cover rounded-md border"
                   />
@@ -146,7 +135,7 @@ export default function InstructorCoursesView() {
                   </div>
                 )}
 
-                {/* 📝 Course Details */}
+                {/* Course Details */}
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold mb-1">{course.title}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -162,7 +151,7 @@ export default function InstructorCoursesView() {
                       })}
                     </span>
 
-                    {/* 🔁 Status Badge */}
+                    {/* Status Badge */}
                     <button
                       onClick={() => toggleStatus(course._id, course.status.toLowerCase())}
                       className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full transition ${
@@ -179,7 +168,7 @@ export default function InstructorCoursesView() {
                   </div>
                 </div>
 
-                {/* 🛠️ Actions */}
+                {/* Actions */}
                 <div className="flex gap-3 text-gray-500 dark:text-gray-300 mt-2 lg:mt-0">
                   <button
                     onClick={() => handleView(course._id)}

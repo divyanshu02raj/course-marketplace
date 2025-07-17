@@ -1,8 +1,10 @@
-//course-marketplace-frontend\src\InstructorDashboardComponents\CreateCourseView.jsx
-
+// src/InstructorDashboardComponents/CreateCourseView.jsx
 import { useState } from "react";
 import { UploadCloud } from "lucide-react";
-import { API_BASE_URL } from "../config";
+import axios from "../api/axios"; // Import our custom axios instance
+import baseAxios from "axios"; // Import the base axios library for external calls
+
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dg05wkeqo/image/upload"; // Replace with your Cloudinary URL
 
 export default function CreateCourseView() {
   const [title, setTitle] = useState("");
@@ -12,8 +14,8 @@ export default function CreateCourseView() {
   const [price, setPrice] = useState("");
   const [thumbnail, setThumbnail] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [loading, setLoading] = useState(false); // 🆕 loading state
-const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
@@ -21,89 +23,78 @@ const [errors, setErrors] = useState({});
     if (file) setPreviewUrl(URL.createObjectURL(file));
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  // Basic validation
-  const newErrors = {};
-  if (!title.trim()) newErrors.title = "Please enter a course title.";
-  if (!shortDesc.trim()) newErrors.shortDesc = "Please enter a short description.";
-  if (!description.trim()) newErrors.description = "Please enter a detailed description.";
-  if (!category) newErrors.category = "Please select a category.";
-  if (!price || Number(price) < 0) newErrors.price = "Please enter a valid price.";
+    // Basic validation
+    const newErrors = {};
+    if (!title.trim()) newErrors.title = "Please enter a course title.";
+    if (!shortDesc.trim()) newErrors.shortDesc = "Please enter a short description.";
+    if (!description.trim()) newErrors.description = "Please enter a detailed description.";
+    if (!category) newErrors.category = "Please select a category.";
+    if (!price || Number(price) < 0) newErrors.price = "Please enter a valid price.";
 
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors);
-    setLoading(false);
-    return;
-  }
-
-  setErrors({}); // clear errors
-
-  let thumbnailUrl = "";
-
-  try {
-    if (thumbnail) {
-      const formData = new FormData();
-      formData.append("file", thumbnail);
-      formData.append("upload_preset", "course_thumbnails");
-
-      const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/dg05wkeqo/image/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const cloudData = await cloudRes.json();
-      thumbnailUrl = cloudData.secure_url;
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setLoading(false);
+      return;
     }
 
-    const courseData = {
-      title,
-      shortDesc,
-      description,
-      category,
-      price,
-      thumbnail: thumbnailUrl,
-      status: "draft",
-    };
+    setErrors({}); // clear errors
 
-    const response = await fetch(`${API_BASE_URL}/api/courses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(courseData),
-    });
+    let thumbnailUrl = "";
 
-    if (!response.ok) throw new Error("Failed to create course");
+    try {
+      // 1. Upload thumbnail to Cloudinary if it exists
+      if (thumbnail) {
+        const formData = new FormData();
+        formData.append("file", thumbnail);
+        formData.append("upload_preset", "course_thumbnails"); // Replace with your preset
 
-    const result = await response.json();
-    console.log("✅ Course created:", result);
-    alert("Course created successfully!");
+        // Use the base axios library for this external API call
+        const cloudRes = await baseAxios.post(CLOUDINARY_URL, formData);
+        thumbnailUrl = cloudRes.data.secure_url;
+      }
 
-    // Reset form
-    setTitle("");
-    setShortDesc("");
-    setDescription("");
-    setCategory("");
-    setPrice("");
-    setThumbnail(null);
-    setPreviewUrl(null);
-  } catch (err) {
-    console.error("❌ Error:", err.message);
-    alert("Failed to create course");
-  } finally {
-    setLoading(false);
-  }
-};
+      // 2. Create the course on our backend
+      const courseData = {
+        title,
+        shortDesc,
+        description,
+        category,
+        price,
+        thumbnail: thumbnailUrl,
+        status: "draft",
+      };
 
+      // Use our custom axios instance which includes credentials and base URL
+      const response = await axios.post("/courses", courseData);
+
+      console.log("✅ Course created:", response.data);
+      alert("Course created successfully!");
+
+      // Reset form
+      setTitle("");
+      setShortDesc("");
+      setDescription("");
+      setCategory("");
+      setPrice("");
+      setThumbnail(null);
+      setPreviewUrl(null);
+    } catch (err) {
+      console.error("❌ Error:", err.response?.data?.message || err.message);
+      alert("Failed to create course");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-12 py-8">
       <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-8">📘 Create a New Course</h2>
-
       <form onSubmit={handleSubmit} className="space-y-10">
-        {/* Title + Short Desc */}
+        {/* Form fields remain the same */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium mb-2">Course Title</label>
@@ -116,7 +107,6 @@ const [errors, setErrors] = useState({});
               required
             />
             {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Short Description</label>
@@ -129,11 +119,8 @@ const [errors, setErrors] = useState({});
               required
             />
             {errors.shortDesc && <p className="text-red-500 text-sm mt-1">{errors.shortDesc}</p>}
-
           </div>
         </div>
-
-        {/* Detailed Description */}
         <div>
           <label className="block text-sm font-medium mb-2">Detailed Description</label>
           <textarea
@@ -146,8 +133,6 @@ const [errors, setErrors] = useState({});
           ></textarea>
           {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
         </div>
-
-        {/* Category + Price */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium mb-2">Category</label>
@@ -178,11 +163,8 @@ const [errors, setErrors] = useState({});
               required
             />
             {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
-
           </div>
         </div>
-
-        {/* Thumbnail Upload */}
         <div>
           <label className="block text-sm font-medium mb-2">Course Thumbnail</label>
           <div className="flex flex-col sm:flex-row gap-6 items-start">
@@ -197,10 +179,7 @@ const [errors, setErrors] = useState({});
                 </div>
               )}
               <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
-              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-
             </label>
-
             {thumbnail && (
               <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                 <p>File selected: <strong>{thumbnail.name}</strong></p>
@@ -208,8 +187,6 @@ const [errors, setErrors] = useState({});
             )}
           </div>
         </div>
-
-          {/* Submit */}
         <div>
           <button
             type="submit"
