@@ -1,8 +1,9 @@
 // src/InstructorDashboardComponents/SettingsView.jsx
 import React, { useEffect, useState } from "react";
-import axios from "../api/axios"; // Our custom instance for the backend
-import baseAxios from "axios"; // Base axios for external calls like Cloudinary
+import axios from "../api/axios";
+import baseAxios from "axios";
 import { Eye, EyeOff } from "lucide-react";
+import toast from "react-hot-toast"; // 1. Import toast
 
 const CLOUD_NAME = "dg05wkeqo";
 const UPLOAD_PRESET = "profile_pictures";
@@ -30,6 +31,7 @@ const InstructorSettingsView = () => {
         setUser(res.data.user);
       } catch (err) {
         console.error("Failed to fetch user", err);
+        toast.error("Could not load user data."); // Replaced alert
       } finally {
         setLoading(false);
       }
@@ -47,13 +49,14 @@ const InstructorSettingsView = () => {
 
   const handleSave = async () => {
     setSaving(true);
+    const toastId = toast.loading("Saving profile..."); // Loading toast
     try {
       const res = await axios.patch("/auth/update", user);
-      alert("Profile updated!");
+      toast.success("Profile updated successfully!", { id: toastId }); // Success toast
       setUser(res.data.user);
     } catch (err) {
       console.error("Failed to update profile:", err);
-      alert("Failed to update profile");
+      toast.error(err.response?.data?.message || "Failed to update profile.", { id: toastId }); // Error toast
     } finally {
       setSaving(false);
     }
@@ -62,21 +65,23 @@ const InstructorSettingsView = () => {
   const handlePasswordUpdate = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
     if (!currentPassword || !newPassword || !confirmPassword) {
-      return alert("Please fill in all password fields.");
+      return toast.error("Please fill in all password fields.");
     }
     if (newPassword !== confirmPassword) {
-      return alert("New passwords do not match.");
+      return toast.error("New passwords do not match.");
     }
+    
+    const toastId = toast.loading("Updating password...");
     try {
       await axios.patch("/auth/update-password", {
         currentPassword,
         newPassword,
       });
-      alert("Password updated successfully!");
+      toast.success("Password updated successfully!", { id: toastId });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
       console.error("Password update failed:", err);
-      alert(err.response?.data?.message || "Failed to update password");
+      toast.error(err.response?.data?.message || "Failed to update password.", { id: toastId });
     }
   };
 
@@ -84,6 +89,7 @@ const InstructorSettingsView = () => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
+    const toastId = toast.loading("Uploading image...");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -94,13 +100,13 @@ const InstructorSettingsView = () => {
       const data = res.data;
       if (data.secure_url) {
         setUser((prev) => ({ ...prev, profileImage: data.secure_url }));
-        alert("Image uploaded. Click Save Changes to apply.");
+        toast.success("Image uploaded. Click Save Changes to apply.", { id: toastId });
       } else {
         throw new Error("Upload failed");
       }
     } catch (err) {
       console.error("Image upload failed:", err);
-      alert("Failed to upload image");
+      toast.error("Failed to upload image.", { id: toastId });
     } finally {
       setUploading(false);
     }

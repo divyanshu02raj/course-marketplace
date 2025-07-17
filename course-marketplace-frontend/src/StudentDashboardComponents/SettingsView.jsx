@@ -1,7 +1,9 @@
-// course-marketplace-frontend\src\StudentDashboardComponents\SettingsView.jsx
+// src/StudentDashboardComponents/SettingsView.jsx
 import React, { useEffect, useState } from "react";
 import axios from "../api/axios";
+import baseAxios from "axios";
 import { Eye, EyeOff } from "lucide-react";
+import toast from "react-hot-toast"; // 1. Import toast
 
 const CLOUD_NAME = "dg05wkeqo";
 const UPLOAD_PRESET = "profile_pictures";
@@ -29,6 +31,7 @@ const SettingsView = () => {
         setUser(res.data.user);
       } catch (err) {
         console.error("Failed to fetch user", err);
+        toast.error("Could not load user data.");
       } finally {
         setLoading(false);
       }
@@ -46,13 +49,14 @@ const SettingsView = () => {
 
   const handleSave = async () => {
     setSaving(true);
+    const toastId = toast.loading("Saving profile...");
     try {
       const res = await axios.patch("/auth/update", user);
-      alert("Profile updated!");
+      toast.success("Profile updated successfully!", { id: toastId });
       setUser(res.data.user);
     } catch (err) {
       console.error("Failed to update profile:", err);
-      alert("Failed to update profile");
+      toast.error(err.response?.data?.message || "Failed to update profile.", { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -61,21 +65,22 @@ const SettingsView = () => {
   const handlePasswordUpdate = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
     if (!currentPassword || !newPassword || !confirmPassword) {
-      return alert("Please fill in all password fields.");
+      return toast.error("Please fill in all password fields.");
     }
     if (newPassword !== confirmPassword) {
-      return alert("New passwords do not match.");
+      return toast.error("New passwords do not match.");
     }
+    const toastId = toast.loading("Updating password...");
     try {
       await axios.patch("/auth/update-password", {
         currentPassword,
         newPassword,
       });
-      alert("Password updated successfully!");
+      toast.success("Password updated successfully!", { id: toastId });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
       console.error("Password update failed:", err);
-      alert(err.response?.data?.message || "Failed to update password");
+      toast.error(err.response?.data?.message || "Failed to update password.", { id: toastId });
     }
   };
 
@@ -83,26 +88,24 @@ const SettingsView = () => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
+    const toastId = toast.loading("Uploading image...");
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
 
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
+      const res = await baseAxios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, formData);
+      const data = res.data;
       if (data.secure_url) {
         setUser((prev) => ({ ...prev, profileImage: data.secure_url }));
-        alert("Image uploaded. Click Save Changes to apply.");
+        toast.success("Image uploaded. Click Save Changes to apply.", { id: toastId });
       } else {
         throw new Error("Upload failed");
       }
     } catch (err) {
       console.error("Image upload failed:", err);
-      alert("Failed to upload image");
+      toast.error("Failed to upload image.", { id: toastId });
     } finally {
       setUploading(false);
     }
@@ -115,8 +118,7 @@ const SettingsView = () => {
   return (
     <div className="w-full px-6 py-10 text-gray-900 dark:text-white">
       <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-10">Account Settings</h1>
-
-      {/* Profile Info Section */}
+      {/* The rest of the JSX remains the same */}
       <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 mb-12">
         <h2 className="text-xl font-semibold mb-6">Profile Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
@@ -182,7 +184,6 @@ const SettingsView = () => {
         </div>
       </div>
 
-      {/* Password Change Section */}
       <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-6">Change Password</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
