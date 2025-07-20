@@ -1,4 +1,4 @@
-// course-marketplace-frontend/src/context/AuthContext.jsx
+// src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "../api/axios";
 
@@ -6,16 +6,22 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Start true to block rendering
+  const [loading, setLoading] = useState(true);
 
   const login = (userData) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
+  // The new function to update the user in the context and localStorage
+  const updateUser = (newUserData) => {
+    setUser(newUserData);
+    localStorage.setItem("user", JSON.stringify(newUserData));
+  };
+
   const logout = async () => {
     try {
-      await axios.post("/auth/logout", {}, { withCredentials: true });
+      await axios.post("/auth/logout");
     } catch (err) {
       console.error("Logout failed:", err);
     } finally {
@@ -24,28 +30,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-useEffect(() => {
-  const validateSession = async () => {
-    setLoading(true); // ensure loading is true during check
-    try {
-      const res = await axios.get("/auth/me", { withCredentials: true });
-      setUser(res.data.user);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-    } catch (err) {
-      console.warn("Session invalid, logging out...");
-      setUser(null);
-      localStorage.removeItem("user");
-    } finally {
-      setLoading(false); // done checking
-    }
-  };
+  useEffect(() => {
+    const validateSession = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get("/auth/me");
+        setUser(res.data.user);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      } catch (err) {
+        console.warn("Session invalid, logging out...");
+        setUser(null);
+        localStorage.removeItem("user");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  validateSession();
-}, []);
-
+    validateSession();
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, updateUser }}> {/* Add updateUser to the provider's value */}
       {children}
     </AuthContext.Provider>
   );

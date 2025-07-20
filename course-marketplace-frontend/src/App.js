@@ -1,12 +1,13 @@
 // src/App.js
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast"; // Import the Toaster
+import { Toaster } from "react-hot-toast";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Landing from "./pages/Landing";
 import { useAuth } from "./context/AuthContext";
+import EditCourseView from "./InstructorDashboardComponents/EditCourseView"; // Import the new component
 
 function App() {
   const { loading } = useAuth();
@@ -21,7 +22,6 @@ function App() {
 
   return (
     <>
-      {/* Add the Toaster component here. It can be styled. */}
       <Toaster
         position="top-center"
         reverseOrder={false}
@@ -43,6 +43,11 @@ function App() {
           {/* Protected */}
           <Route element={<ProtectedRoute allowedRoles={["student", "instructor"]} />}>
             <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
+
+          {/* Instructor-only Routes */}
+          <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
+            <Route path="/instructor/course/edit/:courseId" element={<EditCourseView />} />
           </Route>
         </Routes>
       </Router>

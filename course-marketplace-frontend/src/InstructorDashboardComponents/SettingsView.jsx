@@ -3,14 +3,19 @@ import React, { useEffect, useState } from "react";
 import axios from "../api/axios";
 import baseAxios from "axios";
 import { Eye, EyeOff } from "lucide-react";
-import toast from "react-hot-toast"; // 1. Import toast
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext"; // 1. Import useAuth from context
 
 const CLOUD_NAME = "dg05wkeqo";
 const UPLOAD_PRESET = "profile_pictures";
 
 const InstructorSettingsView = () => {
-  const [user, setUser] = useState({ name: "", email: "", phone: "", profileImage: "" });
-  const [loading, setLoading] = useState(true);
+  // 2. Get user and the new updateUser function from context
+  const { user, updateUser, loading: authLoading } = useAuth();
+
+  // 3. Use local state for form inputs, initialized from the context user
+  const [formUser, setFormUser] = useState(user);
+  
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -24,23 +29,15 @@ const InstructorSettingsView = () => {
     confirm: false,
   });
 
+  // 4. This effect ensures the form state is in sync with the global user state
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get("/auth/me");
-        setUser(res.data.user);
-      } catch (err) {
-        console.error("Failed to fetch user", err);
-        toast.error("Could not load user data."); // Replaced alert
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
+    if (user) {
+      setFormUser(user);
+    }
+  }, [user]);
 
   const handleChange = (e) => {
-    setUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handlePasswordChange = (e) => {
@@ -49,14 +46,15 @@ const InstructorSettingsView = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    const toastId = toast.loading("Saving profile..."); // Loading toast
+    const toastId = toast.loading("Saving profile...");
     try {
-      const res = await axios.patch("/auth/update", user);
-      toast.success("Profile updated successfully!", { id: toastId }); // Success toast
-      setUser(res.data.user);
+      const res = await axios.patch("/auth/update", formUser);
+      toast.success("Profile updated successfully!", { id: toastId });
+      // 5. Call the updateUser function from context to update the global state
+      updateUser(res.data.user);
     } catch (err) {
       console.error("Failed to update profile:", err);
-      toast.error(err.response?.data?.message || "Failed to update profile.", { id: toastId }); // Error toast
+      toast.error(err.response?.data?.message || "Failed to update profile.", { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -99,7 +97,8 @@ const InstructorSettingsView = () => {
       const res = await baseAxios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, formData);
       const data = res.data;
       if (data.secure_url) {
-        setUser((prev) => ({ ...prev, profileImage: data.secure_url }));
+        // Update local form state immediately for preview
+        setFormUser((prev) => ({ ...prev, profileImage: data.secure_url }));
         toast.success("Image uploaded. Click Save Changes to apply.", { id: toastId });
       } else {
         throw new Error("Upload failed");
@@ -112,7 +111,8 @@ const InstructorSettingsView = () => {
     }
   };
 
-  if (loading) {
+  // Use the loading state from the context
+  if (authLoading || !formUser) {
     return <div className="text-center p-10 text-gray-900 dark:text-white">Loading...</div>;
   }
 
@@ -121,13 +121,12 @@ const InstructorSettingsView = () => {
       <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-10">
         Instructor Settings
       </h1>
-      {/* The rest of the JSX remains the same */}
       <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 mb-12">
         <h2 className="text-xl font-semibold mb-6">Profile Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
           <div className="flex flex-col items-center">
             <img
-              src={user.profileImage || "https://placehold.co/100x100"}
+              src={formUser.profileImage || "https://placehold.co/100x100"}
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover border-2 border-indigo-500"
             />
@@ -144,7 +143,7 @@ const InstructorSettingsView = () => {
               <input
                 type="text"
                 name="name"
-                value={user.name}
+                value={formUser.name}
                 onChange={handleChange}
                 className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
               />
@@ -154,7 +153,7 @@ const InstructorSettingsView = () => {
               <input
                 type="email"
                 name="email"
-                value={user.email}
+                value={formUser.email}
                 onChange={handleChange}
                 className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
               />
@@ -164,7 +163,7 @@ const InstructorSettingsView = () => {
               <input
                 type="text"
                 name="phone"
-                value={user.phone}
+                value={formUser.phone}
                 onChange={handleChange}
                 className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
               />

@@ -7,7 +7,7 @@ const cors = require("cors");
 
 // Import your custom modules
 const connectDB = require("./config/db");
-// const configureCloudinary = require("./config/cloudinary"); // Assuming you create this file
+const configureCloudinary = require("./config/cloudinary"); 
 const authRoutes =require("./routes/authRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const lessonRoutes = require("./routes/lessonRoutes");
