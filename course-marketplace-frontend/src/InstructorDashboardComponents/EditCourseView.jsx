@@ -3,17 +3,12 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import toast from "react-hot-toast";
-import { ArrowLeft, BookText, ListVideo, Type, Tag, FileText, DollarSign, Sun, Moon } from "lucide-react";
+import { ArrowLeft, BookText, ListVideo, Type, Tag, FileText, DollarSign } from "lucide-react";
 import LessonManager from "./LessonManager";
-import { useAuth } from "../context/AuthContext"; // Import useAuth to get user info
-import useTheme from "../hooks/useTheme"; // Import useTheme for the toggle
 
 export default function EditCourseView() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Get user from context
-  const { theme, toggleTheme } = useTheme(); // Get theme state and toggle function
-
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -83,45 +78,29 @@ export default function EditCourseView() {
   );
 
   return (
-    <div className="w-full text-gray-900 dark:text-white">
-      {/* New Integrated Header */}
-      <header className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-            Course Editor
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Editing: {course.title}
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
+      {/* Redesigned Header */}
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-900/50 p-6 sm:p-8 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+              Course Editor
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Editing: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{course.title}</span>
+            </p>
+          </div>
           <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+            onClick={() => navigate("/dashboard")}
+            className="flex-shrink-0 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 px-4 py-2 rounded-lg font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
           >
-            {theme === "dark" ? (
-              <Sun className="w-5 h-5 text-yellow-400" />
-            ) : (
-              <Moon className="w-5 h-5 text-blue-600" />
-            )}
+            <ArrowLeft size={16} />
+            Back to My Courses
           </button>
-          {user && (
-            <span className="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-200">
-              Hi, {user.name}
-            </span>
-          )}
         </div>
-      </header>
-
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg p-6 sm:p-8">
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-6 font-semibold"
-        >
-          <ArrowLeft size={16} />
-          Back to My Courses
-        </button>
-
+      </div>
+      
+      <div className="p-6 sm:p-8">
         <div className="border-b border-gray-200 dark:border-gray-700 mb-8">
           <nav className="flex gap-6" aria-label="Tabs">
             <button
