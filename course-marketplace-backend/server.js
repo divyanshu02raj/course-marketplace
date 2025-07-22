@@ -1,86 +1,70 @@
-// course-marketplace-backend\server.js
-// server.js
+// course-marketplace-backend/server.js
 const express = require("express");
+const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-
-// Import your custom modules
 const connectDB = require("./config/db");
-const configureCloudinary = require("./config/cloudinary"); 
-const authRoutes =require("./routes/authRoutes");
-const courseRoutes = require("./routes/courseRoutes");
-const lessonRoutes = require("./routes/lessonRoutes");
 
-// Load environment variables
+// Import all your route files
+const authRoutes = require("./routes/authRoutes");
+const courseRoutes = require("./routes/courseRoutes"); // Make sure this line exists
+const lessonRoutes = require("./routes/lessonRoutes"); // Make sure this line exists
+
 dotenv.config();
-
-// Initialize Express App
 const app = express();
 
-// --- Core Middlewares ---
-app.use(express.json()); // Body parser for JSON
-app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data
-app.use(cookieParser()); // Parser for cookies
+// Middlewares
+app.use(express.json());
+app.use(cookieParser());
 
-// --- CORS Configuration ---
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like Postman, mobile apps) or from the allowed list
       if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
+        return callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        return callback(new Error("CORS not allowed for this origin"));
       }
     },
-    credentials: true, // Required to accept cookies from the frontend
+    credentials: true,
   })
 );
 
 // --- API Routes ---
+// This section tells Express how to handle requests to different URLs
 app.use("/api/auth", authRoutes);
-app.use("/api/courses", courseRoutes);
+app.use("/api/courses", courseRoutes); // This line connects the URL '/api/courses' to your course routes file
 app.use("/api/lessons", lessonRoutes);
 
-// --- Error Handling Middlewares ---
-// 404 Not Found Handler (runs if no other route is matched)
-app.use((req, res, next) => {
-  res.status(404).json({ message: "API route not found" });
+// 404 Not Found Handler
+app.use((req, res) => {
+  res.status(404).json({ message: "API Route not found" });
 });
 
-// Centralized Error Handler (catches errors from any route)
+// Centralized Error Handler
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err.stack);
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    message: err.message || "An unexpected error occurred",
-  });
+  console.error("Server error:", err.stack);
+  res.status(500).json({ message: "Internal server error" });
 });
 
-// --- Server Initialization ---
+// MongoDB + Server Init
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  try {
-    // 1. Connect to the database
-    await connectDB();
-    
-    // 2. Configure third-party services like Cloudinary (optional)
-    // configureCloudinary();
-
-    // 3. Start the Express server
-    app.listen(PORT, () => {
-      console.log(`✅ Server is running on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error("❌ Failed to start the server:", error);
-    process.exit(1); // Exit with failure
-  }
+    try {
+        await connectDB();
+        app.listen(PORT, () => {
+            console.log(`✅ Server running on http://localhost:${PORT}`);
+        });
+    } catch(err) {
+        console.error("❌ MongoDB connection error:", err.message);
+        process.exit(1);
+    }
 };
 
-// Start the server
 startServer();
 
 //URL for vercel: "https://course-marketplace-ten.vercel.app", // for local http://localhost:3000

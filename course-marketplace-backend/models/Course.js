@@ -13,15 +13,31 @@ const CourseSchema = new mongoose.Schema({
   category: String,
   price: Number,
   thumbnail: {
-  type: String,
-  default: "",
-},
-
+    type: String,
+    default: "",
+  },
   status: {
     type: String,
     enum: ["draft", "published", "unpublished"],
     default: "draft",
   },
+  // --- New Fields ---
+  whatYouWillLearn: {
+    type: [String],
+    default: [],
+  },
+  requirements: {
+    type: [String],
+    default: [],
+  },
+  targetAudience: {
+    type: String,
+    default: "",
+  },
+  enrolledStudents: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

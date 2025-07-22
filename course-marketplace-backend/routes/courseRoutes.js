@@ -1,52 +1,55 @@
-// course-marketplace-backend\routes\courseRoutes.js
+// routes/courseRoutes.js
 const express = require("express");
 const router = express.Router();
-const { protect, instructorOnly } = require("../middleware/authMiddleware");
-const Course = require("../models/Course"); // ✅ Needed for direct access
 const {
+  getAllPublishedCourses,
+  getEnrolledCourses,
+  enrollInCourse,
   createCourse,
   getMyCourses,
   getCourseById,
   updateCourse,
+  updateCourseStatus,
   deleteCourse,
-  updateCourseStatus, // ✅ Add this
 } = require("../controllers/courseController");
+const { protect, instructorOnly } = require("../middleware/authMiddleware");
 
-// Existing routes
+// --- Public & Student Routes ---
+
+// GET /api/courses - Fetch all published courses
+router.get("/", getAllPublishedCourses);
+
+// GET /api/courses/enrolled - Get courses for the logged-in student
+// This MUST come BEFORE the '/:id' route
+router.get("/enrolled", protect, getEnrolledCourses);
+
+// POST /api/courses/:courseId/enroll - Enroll in a course
+router.post("/:courseId/enroll", protect, enrollInCourse);
+
+
+// --- Instructor-Only Routes ---
+
+// POST /api/courses - Create a new course
 router.post("/", protect, instructorOnly, createCourse);
+
+// GET /api/courses/my - Get courses for the logged-in instructor
+// This MUST come BEFORE the '/:id' route
 router.get("/my", protect, instructorOnly, getMyCourses);
+
+
+// --- Generic Routes (Must be last) ---
+
+// GET /api/courses/:id - Get a single course by its ID
+// This generic route will catch any path that hasn't been matched yet
 router.get("/:id", protect, getCourseById);
+
+// PATCH /api/courses/:id - Update a course
 router.patch("/:id", protect, instructorOnly, updateCourse);
+
+// PATCH /api/courses/:id/status - Update a course's published status
+router.patch("/:id/status", protect, instructorOnly, updateCourseStatus);
+
+// DELETE /api/courses/:id - Delete a course
 router.delete("/:id", protect, instructorOnly, deleteCourse);
-
-// ✅ New route: Toggle course status
-router.patch("/:id/status", protect,updateCourseStatus, instructorOnly, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    // Validate status
-    if (!["draft", "published"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status value" });
-    }
-
-    // Find course and verify ownership
-    const course = await Course.findById(id);
-    if (!course) return res.status(404).json({ error: "Course not found" });
-
-    if (course.instructor.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: "Not authorized" });
-    }
-
-    // Update status
-    course.status = status;
-    await course.save();
-
-    res.json({ message: "Status updated", status: course.status });
-  } catch (err) {
-    console.error("Status update error:", err);
-    res.status(500).json({ error: "Server error while updating status" });
-  }
-});
 
 module.exports = router;

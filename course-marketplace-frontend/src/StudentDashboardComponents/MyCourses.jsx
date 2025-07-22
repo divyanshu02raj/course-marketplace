@@ -1,10 +1,9 @@
 // StudentDashboardComponents/MyCourses.jsx
-
 import React from "react";
 import { User } from "lucide-react";
 
 const MyCourses = ({ courses }) => {
-  const myCourses = courses.filter((course) => course.enrolled);
+  const myCourses = courses;
 
   if (myCourses.length === 0) {
     return (
@@ -24,37 +23,31 @@ const MyCourses = ({ courses }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {myCourses.map((course) => (
           <div
-            key={course.id}
+            key={course._id}
             className="bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all group"
           >
-            {/* Thumbnail */}
             <div className="relative mb-4 overflow-hidden rounded-xl h-40">
               <img
-                src={course.thumbnail}
+                src={course.thumbnail || "https://placehold.co/400x200/e2e8f0/475569?text=Course"}
                 alt={course.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>
-
-            {/* Title & Instructor */}
             <h3 className="text-lg font-semibold mb-1 text-gray-900 dark:text-white">
               {course.title}
             </h3>
-
             <p className="text-sm text-gray-700 dark:text-gray-400 flex items-center gap-1 mb-3">
               <User className="w-4 h-4" />
-              {course.instructor}
+              {course.instructor?.name || 'Instructor'}
             </p>
-
-            {/* Progress Bar */}
-            <div className="mb-1">
+            <div className="mt-auto pt-4">
               <div className="flex justify-between text-sm text-indigo-600 dark:text-indigo-400 mb-1">
-                <span>{course.progress}% Completed</span>
+                <span>{course.progress || 0}% Completed</span>
               </div>
               <div className="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-full">
                 <div
                   className="h-2 bg-indigo-500 rounded-full transition-all"
-                  style={{ width: `${course.progress}%` }}
+                  style={{ width: `${course.progress || 0}%` }}
                 ></div>
               </div>
             </div>

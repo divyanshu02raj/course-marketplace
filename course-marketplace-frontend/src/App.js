@@ -6,8 +6,9 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Landing from "./pages/Landing";
+import CourseDetailsPage from "./StudentDashboardComponents/CourseDetailsPage";
+import EditCourseView from "./InstructorDashboardComponents/EditCourseView";
 import { useAuth } from "./context/AuthContext";
-import EditCourseView from "./InstructorDashboardComponents/EditCourseView"; // Import the new component
 
 function App() {
   const { loading } = useAuth();
@@ -22,30 +23,20 @@ function App() {
 
   return (
     <>
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-        toastOptions={{
-          className: '',
-          style: {
-            background: '#333',
-            color: '#fff',
-          },
-        }}
-      />
+      <Toaster position="top-center" reverseOrder={false} />
       <Router>
         <Routes>
-          {/* Public */}
+          {/* Public Routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/course/:courseId" element={<CourseDetailsPage />} />
 
-          {/* Protected */}
+          {/* Protected Routes using the correct Outlet structure */}
           <Route element={<ProtectedRoute allowedRoles={["student", "instructor"]} />}>
             <Route path="/dashboard" element={<Dashboard />} />
           </Route>
-
-          {/* Instructor-only Routes */}
+          
           <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
             <Route path="/instructor/course/edit/:courseId" element={<EditCourseView />} />
           </Route>
