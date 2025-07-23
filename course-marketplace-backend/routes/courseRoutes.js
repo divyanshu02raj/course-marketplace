@@ -20,7 +20,7 @@ const { protect, instructorOnly } = require("../middleware/authMiddleware");
 router.get("/", getAllPublishedCourses);
 
 // GET /api/courses/enrolled - Get courses for the logged-in student
-// This MUST come BEFORE the '/:id' route
+// This MUST come BEFORE the '/:id' route to avoid conflicts
 router.get("/enrolled", protect, getEnrolledCourses);
 
 // POST /api/courses/:courseId/enroll - Enroll in a course
@@ -40,7 +40,7 @@ router.get("/my", protect, instructorOnly, getMyCourses);
 // --- Generic Routes (Must be last) ---
 
 // GET /api/courses/:id - Get a single course by its ID
-// This generic route will catch any path that hasn't been matched yet
+// This generic route will catch any path that hasn't been matched by the specific routes above
 router.get("/:id", protect, getCourseById);
 
 // PATCH /api/courses/:id - Update a course

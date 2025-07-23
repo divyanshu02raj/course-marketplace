@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Landing from "./pages/Landing";
+import CoursePlayer from "./pages/CoursePlayer";
 import CourseDetailsPage from "./StudentDashboardComponents/CourseDetailsPage";
 import EditCourseView from "./InstructorDashboardComponents/EditCourseView";
 import { useAuth } from "./context/AuthContext";
@@ -32,9 +33,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/course/:courseId" element={<CourseDetailsPage />} />
 
-          {/* Protected Routes using the correct Outlet structure */}
+          {/* Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["student", "instructor"]} />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/learn/:courseId" element={<CoursePlayer />} />
           </Route>
           
           <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
