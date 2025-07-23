@@ -1,4 +1,5 @@
 // course-marketplace-backend/server.js
+// course-marketplace-backend/server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
@@ -8,8 +9,10 @@ const connectDB = require("./config/db");
 
 // Import all your route files
 const authRoutes = require("./routes/authRoutes");
-const courseRoutes = require("./routes/courseRoutes"); // Make sure this line exists
-const lessonRoutes = require("./routes/lessonRoutes"); // Make sure this line exists
+const courseRoutes = require("./routes/courseRoutes");
+const lessonRoutes = require("./routes/lessonRoutes");
+const questionRoutes = require("./routes/questionRoutes"); // ✅ Add this import
+const noteRoutes = require("./routes/noteRoutes");       // ✅ Add this import
 
 dotenv.config();
 const app = express();
@@ -34,10 +37,12 @@ app.use(
 );
 
 // --- API Routes ---
-// This section tells Express how to handle requests to different URLs
 app.use("/api/auth", authRoutes);
-app.use("/api/courses", courseRoutes); // This line connects the URL '/api/courses' to your course routes file
+app.use("/api/courses", courseRoutes);
 app.use("/api/lessons", lessonRoutes);
+app.use("/api/questions", questionRoutes); // ✅ Add this line
+app.use("/api/notes", noteRoutes);         // ✅ Add this line
+
 
 // 404 Not Found Handler
 app.use((req, res) => {
@@ -66,6 +71,7 @@ const startServer = async () => {
 };
 
 startServer();
+
 
 //URL for vercel: "https://course-marketplace-ten.vercel.app", // for local http://localhost:3000
 

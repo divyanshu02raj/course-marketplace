@@ -1,6 +1,11 @@
 // models/Lesson.js
 const mongoose = require("mongoose");
 
+const ResourceSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    url: { type: String, required: true },
+});
+
 const LessonSchema = new mongoose.Schema({
   course: {
     type: mongoose.Schema.Types.ObjectId,
@@ -14,11 +19,12 @@ const LessonSchema = new mongoose.Schema({
   videoUrl: String,
   notes: String,
   order: Number,
-  duration: Number, // in minutes (optional)
+  duration: Number,
   isPreview: {
     type: Boolean,
-    default: false, // lesson is not a free preview by default
+    default: false,
   },
-}, { timestamps: true }); // adds createdAt and updatedAt automatically
+  resources: [ResourceSchema], // ✅ New field for resources
+}, { timestamps: true });
 
 module.exports = mongoose.model("Lesson", LessonSchema);

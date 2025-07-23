@@ -53,3 +53,4 @@ router.patch("/:id/status", protect, instructorOnly, updateCourseStatus);
 router.delete("/:id", protect, instructorOnly, deleteCourse);
 
 module.exports = router;
+  

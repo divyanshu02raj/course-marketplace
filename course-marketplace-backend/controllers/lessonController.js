@@ -5,13 +5,13 @@ const Course = require("../models/Course");
 // Create a new lesson
 exports.createLesson = async (req, res) => {
   const { courseId } = req.params;
-  const { title, videoUrl, notes, order, duration, isPreview } = req.body;
+  // Destructure the new 'resources' field from the body
+  const { title, videoUrl, notes, order, duration, isPreview, resources } = req.body;
 
   try {
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: "Course not found." });
 
-    // Make sure instructor owns the course
     if (course.instructor.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Unauthorized to add lessons to this course." });
     }
@@ -24,6 +24,7 @@ exports.createLesson = async (req, res) => {
       order,
       duration,
       isPreview,
+      resources, // Add resources to the new lesson
     });
 
     res.status(201).json(lesson);
@@ -35,7 +36,6 @@ exports.createLesson = async (req, res) => {
 // Get lessons for a specific course
 exports.getLessonsByCourse = async (req, res) => {
   const { courseId } = req.params;
-
   try {
     const lessons = await Lesson.find({ course: courseId }).sort({ order: 1 });
     res.json(lessons);
@@ -47,17 +47,16 @@ exports.getLessonsByCourse = async (req, res) => {
 // Update a lesson
 exports.updateLesson = async (req, res) => {
   const { lessonId } = req.params;
-
   try {
     const lesson = await Lesson.findById(lessonId);
     if (!lesson) return res.status(404).json({ message: "Lesson not found." });
 
-    // Optional: verify user owns the course the lesson belongs to
     const course = await Course.findById(lesson.course);
     if (course.instructor.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Unauthorized to update this lesson." });
     }
 
+    // req.body will now include the updated resources array
     const updatedLesson = await Lesson.findByIdAndUpdate(lessonId, req.body, {
       new: true,
       runValidators: true,
@@ -72,7 +71,6 @@ exports.updateLesson = async (req, res) => {
 // Delete a lesson
 exports.deleteLesson = async (req, res) => {
   const { lessonId } = req.params;
-
   try {
     const lesson = await Lesson.findById(lessonId);
     if (!lesson) return res.status(404).json({ message: "Lesson not found." });
