@@ -5,8 +5,8 @@ const Course = require("../models/Course");
 // Create a new lesson
 exports.createLesson = async (req, res) => {
   const { courseId } = req.params;
-  // Destructure the new 'resources' field from the body
-  const { title, videoUrl, notes, order, duration, isPreview, resources } = req.body;
+  // Use 'content' instead of 'notes'
+  const { title, videoUrl, content, order, duration, isPreview, resources } = req.body;
 
   try {
     const course = await Course.findById(courseId);
@@ -20,11 +20,11 @@ exports.createLesson = async (req, res) => {
       course: courseId,
       title,
       videoUrl,
-      notes,
+      content, // ✅ Use 'content'
       order,
       duration,
       isPreview,
-      resources, // Add resources to the new lesson
+      resources,
     });
 
     res.status(201).json(lesson);
@@ -56,7 +56,6 @@ exports.updateLesson = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized to update this lesson." });
     }
 
-    // req.body will now include the updated resources array
     const updatedLesson = await Lesson.findByIdAndUpdate(lessonId, req.body, {
       new: true,
       runValidators: true,

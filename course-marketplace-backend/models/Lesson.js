@@ -17,14 +17,14 @@ const LessonSchema = new mongoose.Schema({
     required: true,
   },
   videoUrl: String,
-  notes: String,
+  content: String, // ✅ Changed from 'notes' to 'content'
   order: Number,
   duration: Number,
   isPreview: {
     type: Boolean,
     default: false,
   },
-  resources: [ResourceSchema], // ✅ New field for resources
+  resources: [ResourceSchema],
 }, { timestamps: true });
 
 module.exports = mongoose.model("Lesson", LessonSchema);

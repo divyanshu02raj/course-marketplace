@@ -1,26 +1,154 @@
 // src/pages/CoursePlayer.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { PlayCircle, CheckCircle, ArrowLeft, ChevronRight, Sparkles, BookOpen, MessageSquare, Paperclip, Edit, Download, Users, Clock } from 'lucide-react';
+import { PlayCircle, CheckCircle, ArrowLeft, ChevronRight, Sparkles, BookOpen, MessageSquare, Paperclip, Edit, Download, Users, Clock, Send, Save, Play, Pause, RotateCcw, RotateCw, Fullscreen, Minimize } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
-// A simple debounce hook for auto-saving notes
-function useDebounce(value, delay) {
-    const [debouncedValue, setDebouncedValue] = useState(value);
+// --- NEW ENHANCED VIDEO PLAYER COMPONENT ---
+const VideoPlayer = ({ src, onComplete }) => {
+    const playerContainerRef = useRef(null); // Ref for the main container
+    const videoRef = useRef(null);
+    const [isPlaying, setIsPlaying] = useState(true);
+    const [playbackRate, setPlaybackRate] = useState(1);
+    const [showControls, setShowControls] = useState(true);
+    const [isFullscreen, setIsFullscreen] = useState(false); // State for fullscreen
+    let controlTimeout;
+
+    const handlePlayPause = () => {
+        if (videoRef.current) {
+            if (videoRef.current.paused) {
+                videoRef.current.play();
+            } else {
+                videoRef.current.pause();
+            }
+        }
+    };
+
+    const handleSkip = (amount) => {
+        if (videoRef.current) {
+            videoRef.current.currentTime += amount;
+        }
+    };
+
+    const handlePlaybackRateChange = (rate) => {
+        if (videoRef.current) {
+            videoRef.current.playbackRate = rate;
+            setPlaybackRate(rate);
+        }
+    };
+
+    // ✅ New function to handle fullscreen toggle
+    const handleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            playerContainerRef.current?.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
     useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-        return () => {
-            clearTimeout(handler);
+        const video = videoRef.current;
+        const handleKeyDown = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handlePlayPause();
+            }
+            if (e.code === 'ArrowRight') handleSkip(10);
+            if (e.code === 'ArrowLeft') handleSkip(-10);
         };
-    }, [value, delay]);
-    return debouncedValue;
-}
+        
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
 
-// Helper components for tabs
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        window.addEventListener('keydown', handleKeyDown);
+        video?.addEventListener('play', () => setIsPlaying(true));
+        video?.addEventListener('pause', () => setIsPlaying(false));
+        video?.addEventListener('ended', onComplete);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            window.removeEventListener('keydown', handleKeyDown);
+            video?.removeEventListener('play', () => setIsPlaying(true));
+            video?.removeEventListener('pause', () => setIsPlaying(false));
+            video?.removeEventListener('ended', onComplete);
+        };
+    }, [onComplete]);
+
+    const handleMouseMove = () => {
+        setShowControls(true);
+        clearTimeout(controlTimeout);
+        controlTimeout = setTimeout(() => setShowControls(false), 3000);
+    };
+
+    return (
+        <div 
+            ref={playerContainerRef} // Add ref to the main container
+            className="relative bg-black aspect-video rounded-2xl overflow-hidden shadow-2xl"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => clearTimeout(controlTimeout)}
+        >
+            {src ? (
+                <video
+                    ref={videoRef}
+                    key={src}
+                    autoPlay
+                    className="w-full h-full"
+                    onClick={handlePlayPause}
+                >
+                    <source src={src} type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+            ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400">
+                    <p>No video available for this lesson.</p>
+                </div>
+            )}
+            <AnimatePresence>
+                {showControls && src && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent"
+                    >
+                        <div className="flex items-center justify-center gap-6 text-white">
+                            <button onClick={() => handleSkip(-10)} className="hover:scale-110 transition"><RotateCcw size={24} /></button>
+                            <button onClick={handlePlayPause} className="p-2 bg-white/20 rounded-full hover:scale-110 transition">
+                                {isPlaying ? <Pause size={28} /> : <Play size={28} />}
+                            </button>
+                            <button onClick={() => handleSkip(10)} className="hover:scale-110 transition"><RotateCw size={24} /></button>
+                            <div className="absolute right-4 bottom-4 flex items-center gap-4">
+                                <select 
+                                    value={playbackRate} 
+                                    onChange={(e) => handlePlaybackRateChange(parseFloat(e.target.value))}
+                                    className="bg-black/50 text-white text-xs font-bold rounded px-2 py-1 focus:outline-none appearance-none"
+                                >
+                                    <option value="1">1x</option>
+                                    <option value="1.25">1.25x</option>
+                                    <option value="1.5">1.5x</option>
+                                    <option value="2">2x</option>
+                                </select>
+                                {/* ✅ Fullscreen Button */}
+                                <button onClick={handleFullscreen} className="hover:scale-110 transition">
+                                    {isFullscreen ? <Minimize size={20} /> : <Fullscreen size={20} />}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+
+// --- OTHER HELPER COMPONENTS ---
 const TabButton = ({ id, activeTab, setActiveTab, icon: Icon, children }) => (
     <button
         onClick={() => setActiveTab(id)}
@@ -37,38 +165,155 @@ const TabButton = ({ id, activeTab, setActiveTab, icon: Icon, children }) => (
 
 const LessonContent = ({ lesson, onGetSummary, isSummaryLoading, summary }) => (
     <div>
-        <h3 className="text-xl font-bold text-gray-800 dark:text-white">Lesson Content</h3>
-        <div className="prose dark:prose-invert max-w-none mt-4 text-gray-700 dark:text-gray-300">
-            <p>{lesson?.notes || "No additional content for this lesson."}</p>
-        </div>
-        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <button onClick={onGetSummary} disabled={isSummaryLoading} className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold hover:text-indigo-800 dark:hover:text-indigo-300 transition disabled:opacity-50">
+        <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white">Lesson Content</h3>
+            <button 
+                onClick={onGetSummary} 
+                disabled={isSummaryLoading} 
+                className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-sm hover:text-indigo-800 dark:hover:text-indigo-300 transition disabled:opacity-50"
+            >
                 <Sparkles size={18} />
                 {isSummaryLoading ? 'Generating...' : 'Get Key Takeaways'}
             </button>
-            {summary && (
-                <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-lg"
-                >
+        </div>
+        <div className="prose dark:prose-invert max-w-none mt-4 text-gray-700 dark:text-gray-300">
+            <p>{lesson?.content || lesson?.notes || "No additional content for this lesson."}</p>
+        </div>
+        {summary && (
+            <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+            <h4 className="font-semibold text-gray-800 dark:text-white mb-2">Key Takeaways:</h4>
+            <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-lg">
                 <div className="prose prose-sm dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 whitespace-pre-wrap">
                     {summary}
                 </div>
-                </motion.div>
-            )}
-        </div>
+            </div>
+            </motion.div>
+        )}
     </div>
 );
 
-const QnaSection = () => (
-    <div>
-        <h3 className="text-xl font-bold text-gray-800 dark:text-white">Questions & Answers</h3>
-        <div className="mt-4 text-center text-gray-500 dark:text-gray-400 py-10 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <p>Q&A feature coming soon!</p>
+const QnaSection = ({ user, currentLesson, courseId }) => {
+    const [questions, setQuestions] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [newQuestion, setNewQuestion] = useState("");
+    const [answerText, setAnswerText] = useState({});
+
+    const fetchQuestions = useCallback(async () => {
+        if (!currentLesson) return;
+        setIsLoading(true);
+        try {
+            const res = await axios.get(`/questions/${currentLesson._id}`);
+            setQuestions(res.data);
+        } catch (error) {
+            toast.error("Failed to load Q&A.");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [currentLesson]);
+
+    useEffect(() => {
+        fetchQuestions();
+    }, [fetchQuestions]);
+
+    const handleAskQuestion = async (e) => {
+        e.preventDefault();
+        if (!newQuestion.trim()) return;
+        
+        const toastId = toast.loading("Posting your question...");
+        try {
+            await axios.post(`/questions/${currentLesson._id}`, {
+                title: newQuestion.slice(0, 50),
+                text: newQuestion,
+                courseId: courseId,
+            });
+            setNewQuestion("");
+            toast.success("Question posted!", { id: toastId });
+            await fetchQuestions(); 
+        } catch (error) {
+            toast.error("Failed to post question.", { id: toastId });
+        }
+    };
+
+    const handleAnswer = async (questionId) => {
+        const text = answerText[questionId];
+        if (!text || !text.trim()) return;
+
+        const toastId = toast.loading("Posting your answer...");
+        try {
+            const res = await axios.post(`/questions/answer/${questionId}`, { text });
+            setQuestions(prev => prev.map(q => q._id === questionId ? res.data : q));
+            setAnswerText(prev => ({...prev, [questionId]: ""}));
+            toast.success("Answer posted!", { id: toastId });
+        } catch (error) {
+            toast.error("Failed to post answer.", { id: toastId });
+        }
+    };
+
+    return (
+        <div>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white">Questions & Answers</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {user?.role === 'student' ? "Your questions are private between you and the instructor." : "Answer questions from your students."}
+            </p>
+            
+            {user?.role === 'student' && (
+                <form onSubmit={handleAskQuestion} className="mt-4 flex gap-2">
+                    <input
+                        type="text"
+                        value={newQuestion}
+                        onChange={(e) => setNewQuestion(e.target.value)}
+                        placeholder="Type your question here..."
+                        className="flex-grow p-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                    />
+                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">
+                        <Send size={20} />
+                    </button>
+                </form>
+            )}
+
+            <div className="mt-8 space-y-6">
+                {isLoading ? <p>Loading questions...</p> : questions.map(q => (
+                    <div key={q._id}>
+                        <div className="flex items-start gap-3">
+                            <img src={q.user.profileImage || `https://i.pravatar.cc/40?u=${q.user.name}`} alt={q.user.name} className="w-8 h-8 rounded-full mt-1"/>
+                            <div>
+                                <p className="font-semibold text-gray-800 dark:text-gray-200">{q.user.name}</p>
+                                <p className="text-gray-700 dark:text-gray-300">{q.text}</p>
+                                <p className="text-xs text-gray-500">Asked on {new Date(q.createdAt).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        {q.answers.map(a => (
+                            <div key={a._id} className="ml-8 mt-3 flex items-start gap-3 border-l-2 border-indigo-200 dark:border-indigo-800 pl-4">
+                                <img src={a.user.profileImage || `https://i.pravatar.cc/40?u=${a.user.name}`} alt={a.user.name} className="w-8 h-8 rounded-full mt-1"/>
+                                <div>
+                                    <p className="font-semibold text-indigo-700 dark:text-indigo-400">{a.user.name} (Instructor)</p>
+                                    <p className="text-gray-700 dark:text-gray-300">{a.text}</p>
+                                    <p className="text-xs text-gray-500">Answered on {new Date(a.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                        ))}
+                        {user?.role === 'instructor' && q.answers.length === 0 && (
+                            <div className="ml-8 mt-3 flex gap-2 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+                                <input
+                                    type="text"
+                                    value={answerText[q._id] || ""}
+                                    onChange={(e) => setAnswerText(prev => ({...prev, [q._id]: e.target.value}))}
+                                    placeholder="Type your answer..."
+                                    className="flex-grow p-2 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg"
+                                />
+                                <button onClick={() => handleAnswer(q._id)} className="px-3 py-1 bg-indigo-600 text-white text-sm font-semibold rounded-lg">Reply</button>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 const ResourcesSection = ({ resources }) => (
     <div>
@@ -79,7 +324,7 @@ const ResourcesSection = ({ resources }) => (
                     <a
                         key={index}
                         href={resource.url}
-                        download // ✅ This attribute forces the browser to download the file
+                        download
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition"
@@ -100,10 +345,22 @@ const ResourcesSection = ({ resources }) => (
     </div>
 );
 
-const NotesSection = ({ note, setNote }) => (
+const NotesSection = ({ note, setNote, onSave, isSaving }) => (
     <div>
-        <h3 className="text-xl font-bold text-gray-800 dark:text-white">My Personal Notes</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your notes are automatically saved.</p>
+        <div className="flex justify-between items-center">
+            <div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">My Personal Notes</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Jot down your thoughts and key points here.</p>
+            </div>
+            <button 
+                onClick={onSave}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-indigo-700 transition disabled:opacity-50"
+            >
+                <Save size={16} />
+                {isSaving ? "Saving..." : "Save Note"}
+            </button>
+        </div>
         <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -116,6 +373,7 @@ const NotesSection = ({ note, setNote }) => (
 
 export default function CoursePlayer() {
   const { courseId } = useParams();
+  const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [currentLesson, setCurrentLesson] = useState(null);
@@ -126,7 +384,7 @@ export default function CoursePlayer() {
   const [summary, setSummary] = useState("");
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [myNote, setMyNote] = useState("");
-  const debouncedNote = useDebounce(myNote, 1000);
+  const [isNoteSaving, setIsNoteSaving] = useState(false);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -151,8 +409,37 @@ export default function CoursePlayer() {
   
   useEffect(() => {
     setSummary("");
-    setMyNote("");
-  }, [currentLesson]);
+    const fetchNote = async () => {
+        if (currentLesson && user) {
+            try {
+                const res = await axios.get(`/notes/${currentLesson._id}?courseId=${courseId}`);
+                setMyNote(res.data.content || "");
+            } catch (error) {
+                console.error("Failed to fetch note", error);
+                setMyNote("");
+            }
+        }
+    };
+    fetchNote();
+  }, [currentLesson, user, courseId]);
+
+  const handleSaveNote = async () => {
+    if (!currentLesson || !user) return;
+    setIsNoteSaving(true);
+    const toastId = toast.loading("Saving your note...");
+    try {
+        await axios.post(`/notes/${currentLesson._id}`, { 
+            content: myNote,
+            courseId: courseId 
+        });
+        toast.success("Note saved successfully!", { id: toastId });
+    } catch (error) {
+        console.error("Failed to save note", error);
+        toast.error("Could not save your note.", { id: toastId });
+    } finally {
+        setIsNoteSaving(false);
+    }
+  };
 
   const handleSetCurrentLesson = (lesson) => {
     setCurrentLesson(lesson);
@@ -176,7 +463,8 @@ export default function CoursePlayer() {
   };
 
   const handleGetSummary = async () => {
-    if (!currentLesson?.notes) {
+    const lessonContent = currentLesson?.content || currentLesson?.notes;
+    if (!lessonContent) {
       return toast.error("No content available to summarize for this lesson.");
     }
     setIsSummaryLoading(true);
@@ -185,11 +473,7 @@ export default function CoursePlayer() {
 
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
-      const mockSummary = `
-        - This is the first key takeaway from the lesson content.
-        - Here is another crucial point that students should remember.
-        - Finally, this summarizes the main conclusion of the lesson.
-      `;
+      const mockSummary = `- This is the first key takeaway from the lesson content.\n- Here is another crucial point that students should remember.\n- Finally, this summarizes the main conclusion of the lesson.`;
       setSummary(mockSummary);
       toast.success("Summary generated!", { id: toastId });
     } catch (error) {
@@ -262,18 +546,10 @@ export default function CoursePlayer() {
               >
                 {currentLesson ? (
                   <div className="space-y-8">
-                    <div className="bg-black aspect-video rounded-2xl overflow-hidden shadow-2xl">
-                        {currentLesson.videoUrl ? (
-                            <video key={currentLesson._id} controls autoPlay className="w-full h-full">
-                            <source src={currentLesson.videoUrl} type="video/mp4" />
-                            Your browser does not support the video tag.
-                            </video>
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400">
-                            <p>No video available for this lesson.</p>
-                            </div>
-                        )}
-                    </div>
+                    <VideoPlayer 
+                        src={currentLesson.videoUrl} 
+                        onComplete={handleMarkAsComplete} 
+                    />
                     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
                       <div className="border-b border-gray-200 dark:border-gray-700">
                           <nav className="flex gap-6 px-6">
@@ -292,9 +568,9 @@ export default function CoursePlayer() {
                                   exit={{ opacity: 0, y: -10 }}
                               >
                                   {activeTab === 'content' && <LessonContent lesson={currentLesson} onGetSummary={handleGetSummary} isSummaryLoading={isSummaryLoading} summary={summary} />}
-                                  {activeTab === 'qna' && <QnaSection />}
+                                  {activeTab === 'qna' && <QnaSection user={user} currentLesson={currentLesson} courseId={courseId} />}
                                   {activeTab === 'resources' && <ResourcesSection resources={currentLesson?.resources || []} />}
-                                  {activeTab === 'notes' && <NotesSection note={myNote} setNote={setMyNote} />}
+                                  {activeTab === 'notes' && <NotesSection note={myNote} setNote={setMyNote} onSave={handleSaveNote} isSaving={isNoteSaving} />}
                               </motion.div>
                           </AnimatePresence>
                       </div>
