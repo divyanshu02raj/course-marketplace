@@ -1,133 +1,126 @@
-// course-marketplace-frontend\src\InstructorDashboardComponents\MessagesView.jsx
-import React, { useState } from "react";
-import { MessageSquare } from "lucide-react";
+// src/InstructorDashboardComponents/MessagesView.jsx
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "../api/axios";
+import toast from "react-hot-toast";
+import { MessageSquare, HelpCircle, Send } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
-const dummyMessages = [
-  {
-    id: 1,
-    sender: "John Doe",
-    subject: "Question about Course 101",
-    timestamp: "2025-06-28 10:30 AM",
-    read: false,
-    thread: [
-      { fromMe: false, text: "Hello, I have a question regarding Course 101. Could you clarify the assignment?" },
-      { fromMe: true, text: "Sure, John! The assignment is to review chapter 3 and submit your responses by next Friday." }
-    ]
-  },
-  {
-    id: 2,
-    sender: "Jane Smith",
-    subject: "Feedback on the latest course update",
-    timestamp: "2025-06-28 12:00 PM",
-    read: true,
-    thread: [
-      { fromMe: false, text: "I just reviewed the latest course update. The new section is very helpful!" },
-      { fromMe: true, text: "Thank you for the feedback, Jane! I'm glad you found it useful." }
-    ]
-  },
-  {
-    id: 3,
-    sender: "Alice Johnson",
-    subject: "Issue with Assignment 2",
-    timestamp: "2025-06-27 4:15 PM",
-    read: false,
-    thread: [
-      { fromMe: false, text: "I'm having trouble with Assignment 2. Could you provide some guidance?" },
-      { fromMe: true, text: "Hi Alice! Sure, I will be available after 2 PM today to help you. Let me know when works for you." }
-    ]
-  }
-];
+// --- Q&A Tab Component ---
+const QnaView = () => {
+    const [questions, setQuestions] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [answerText, setAnswerText] = useState({});
 
-export default function InstructorMessagesView() {
-  const [selectedMessage, setSelectedMessage] = useState(null);
+    const fetchUnansweredQuestions = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await axios.get("/questions/instructor");
+            setQuestions(res.data);
+        } catch (error) {
+            toast.error("Failed to load questions.");
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchUnansweredQuestions();
+    }, [fetchUnansweredQuestions]);
+
+    const handleAnswer = async (questionId) => {
+        const text = answerText[questionId];
+        if (!text || !text.trim()) return toast.error("Answer cannot be empty.");
+
+        const toastId = toast.loading("Posting your answer...");
+        try {
+            await axios.post(`/questions/answer/${questionId}`, { text });
+            toast.success("Answer posted!", { id: toastId });
+            // Refetch questions to remove the answered one from the list
+            fetchUnansweredQuestions();
+        } catch (error) {
+            toast.error("Failed to post answer.", { id: toastId });
+        }
+    };
+
+    return (
+        <div>
+            {isLoading ? (
+                <p className="text-center text-gray-500 dark:text-gray-400">Loading questions...</p>
+            ) : questions.length === 0 ? (
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                    <HelpCircle className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-lg font-medium">All Caught Up!</h3>
+                    <p className="mt-1 text-sm">There are no unanswered student questions right now.</p>
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {questions.map(q => (
+                        <div key={q._id} className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border dark:border-gray-700">
+                            <div className="flex items-start gap-3">
+                                <img src={q.user.profileImage || `https://i.pravatar.cc/40?u=${q.user.name}`} alt={q.user.name} className="w-8 h-8 rounded-full mt-1"/>
+                                <div>
+                                    <p className="font-semibold text-gray-800 dark:text-gray-200">{q.user.name}</p>
+                                    <p className="text-xs text-gray-500">
+                                        In <span className="font-medium text-indigo-600">{q.course.title}</span> / <span className="font-medium">{q.lesson.title}</span>
+                                    </p>
+                                    <p className="text-gray-700 dark:text-gray-300 mt-2">{q.text}</p>
+                                </div>
+                            </div>
+                            <div className="mt-3 flex gap-2 pl-11">
+                                <input
+                                    type="text"
+                                    value={answerText[q._id] || ""}
+                                    onChange={(e) => setAnswerText(prev => ({...prev, [q._id]: e.target.value}))}
+                                    placeholder="Type your answer..."
+                                    className="flex-grow p-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
+                                />
+                                <button onClick={() => handleAnswer(q._id)} className="px-3 py-1 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">
+                                    <Send size={16}/>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- Main MessagesView Component ---
+export default function MessagesView() {
+  const [activeTab, setActiveTab] = useState("qna");
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-12 py-8">
-      <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-8 flex items-center gap-2">
-        <MessageSquare className="w-6 h-6" /> Student Messages
+    <div className="w-full">
+      <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-6">
+        Communication Center
       </h2>
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+        <nav className="flex gap-6" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('qna')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'qna' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            <HelpCircle size={16} /> Course Q&A
+          </button>
+          <button
+            onClick={() => setActiveTab('messages')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'messages' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            <MessageSquare size={16} /> Direct Messages
+          </button>
+        </nav>
+      </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 h-[80vh]">
-        {/* Inbox */}
-        <div className="w-full lg:w-1/3 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Inbox</h3>
-          <div className="space-y-3">
-            {dummyMessages.map((msg) => (
-              <div
-                key={msg.id}
-                onClick={() => setSelectedMessage(msg)}
-                className={`cursor-pointer p-4 rounded-lg transition border ${
-                  selectedMessage?.id === msg.id
-                    ? "bg-indigo-100 dark:bg-indigo-700 border-indigo-500"
-                    : msg.read
-                    ? "bg-gray-50 dark:bg-gray-800 border-transparent"
-                    : "bg-gray-100 dark:bg-gray-800 border-indigo-300"
-                } hover:bg-gray-200 dark:hover:bg-gray-700`}
-              >
-                <h4 className="font-medium text-gray-900 dark:text-white truncate">{msg.subject}</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{msg.sender}</p>
-                <p className="text-xs text-gray-500 mt-1">{msg.timestamp}</p>
-              </div>
-            ))}
+      <div>
+        {activeTab === 'qna' && <QnaView />}
+        {activeTab === 'messages' && (
+          <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+            <MessageSquare className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-lg font-medium">Direct Messages</h3>
+            <p className="mt-1 text-sm">This feature is coming soon.</p>
           </div>
-        </div>
-
-        {/* Message View */}
-        <div className="w-full lg:w-2/3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow flex flex-col">
-          {selectedMessage ? (
-            <>
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold">
-                    {selectedMessage.sender[0]}
-                  </div>
-                  <div>
-                    <h4 className="text-base font-semibold text-gray-900 dark:text-white">{selectedMessage.subject}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">From: {selectedMessage.sender}</p>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedMessage(null)} className="text-gray-500 hover:text-red-500 text-sm">
-                  ✕
-                </button>
-              </div>
-
-              {/* Message Thread */}
-              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                {selectedMessage.thread.map((msg, idx) => (
-                  <div key={idx} className={`flex ${msg.fromMe ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={`max-w-[75%] px-4 py-3 text-sm rounded-2xl shadow leading-relaxed ${
-                        msg.fromMe
-                          ? "bg-indigo-600 text-white rounded-br-none"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-none"
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Reply Bar */}
-              <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
-                <button className="text-gray-400 dark:text-gray-300 hover:text-indigo-500">📎</button>
-                <input
-                  type="text"
-                  placeholder="Reply to student..."
-                  className="flex-grow p-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <button className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">
-                  Send
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 italic">
-              Select a message to view
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

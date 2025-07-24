@@ -1,21 +1,26 @@
 // routes/questionRoutes.js
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/authMiddleware");
-// We will create the controller functions later, for now we use placeholders
-const { getQuestionsForLesson, askQuestion, answerQuestion } = {
-    getQuestionsForLesson: (req, res) => res.json([]),
-    askQuestion: (req, res) => res.status(201).json({ message: "Question asked" }),
-    answerQuestion: (req, res) => res.status(201).json({ message: "Answer posted" }),
-};
+const { protect, instructorOnly } = require("../middleware/authMiddleware");
+const { 
+    getQuestionsForLesson, 
+    askQuestion, 
+    answerQuestion,
+    getUnansweredQuestionsForInstructor
+} = require("../controllers/questionController");
 
-// Get all questions for a specific lesson
+// --- Instructor Route ---
+// GET /api/questions/instructor - Get all unanswered questions for an instructor
+router.get("/instructor", protect, instructorOnly, getUnansweredQuestionsForInstructor);
+
+// --- Student & General Routes ---
+// GET /api/questions/:lessonId - Get questions for a specific lesson
 router.get("/:lessonId", protect, getQuestionsForLesson);
 
-// Post a new question to a lesson
+// POST /api/questions/:lessonId - Post a new question to a lesson
 router.post("/:lessonId", protect, askQuestion);
 
-// Post an answer to a question
+// POST /api/questions/answer/:questionId - Post an answer to a question
 router.post("/answer/:questionId", protect, answerQuestion);
 
 module.exports = router;

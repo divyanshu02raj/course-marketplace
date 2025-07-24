@@ -17,14 +17,3 @@ const QuestionSchema = new mongoose.Schema({
 
 module.exports = mongoose.model("Question", QuestionSchema);
 
-// models/Note.js
-const mongoose = require("mongoose");
-
-const NoteSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
-  lesson: { type: mongoose.Schema.Types.ObjectId, ref: "Lesson", required: true },
-  content: { type: String, default: "" },
-}, { timestamps: true });
-
-module.exports = mongoose.model("Note", NoteSchema);
