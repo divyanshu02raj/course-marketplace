@@ -378,12 +378,16 @@ export default function CoursePlayer() {
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
-        const [courseRes, lessonsRes] = await Promise.all([
+        const [courseRes, lessonsRes, progressRes] = await Promise.all([
           axios.get(`/courses/${courseId}`),
           axios.get(`/lessons/${courseId}`),
+          axios.get(`/enrollments/${courseId}/progress`)
         ]);
+        
         setCourse(courseRes.data);
         setLessons(lessonsRes.data);
+        setCompletedLessons(new Set(progressRes.data.completedLessons));
+
         if (lessonsRes.data.length > 0) {
           setCurrentLesson(lessonsRes.data[0]);
         }
@@ -393,8 +397,10 @@ export default function CoursePlayer() {
         setLoading(false);
       }
     };
-    fetchCourseData();
-  }, [courseId]);
+    if (user) {
+        fetchCourseData();
+    }
+  }, [courseId, user]);
   
   useEffect(() => {
     setSummary("");
@@ -436,19 +442,33 @@ export default function CoursePlayer() {
     window.scrollTo(0, 0);
   };
 
-  const handleMarkAsComplete = () => {
-    if (!currentLesson) return;
+  const handleMarkAsComplete = async () => {
+    if (!currentLesson || completedLessons.has(currentLesson._id)) return;
+
+    const originalCompleted = new Set(completedLessons);
     const newCompleted = new Set(completedLessons);
     newCompleted.add(currentLesson._id);
     setCompletedLessons(newCompleted);
 
-    const currentIndex = lessons.findIndex(l => l._id === currentLesson._id);
-    const nextLesson = lessons[currentIndex + 1];
+    try {
+        await axios.post(`/enrollments/${courseId}/lessons/${currentLesson._id}/complete`);
 
-    if (nextLesson) {
-      handleSetCurrentLesson(nextLesson);
-    } else {
-      toast.success("Congratulations! You've completed the course!");
+        const currentIndex = lessons.findIndex(l => l._id === currentLesson._id);
+        const nextLesson = lessons[currentIndex + 1];
+        if (nextLesson) {
+            handleSetCurrentLesson(nextLesson);
+        } else {
+            toast.success("Congratulations! You've completed the course!");
+        }
+    } catch (error) {
+        toast.error("Couldn't save progress. Please try again.");
+        setCompletedLessons(originalCompleted);
+    }
+  };
+
+  const handleVideoEnd = () => {
+    if (currentLesson && !currentLesson.hasQuiz) {
+      handleMarkAsComplete();
     }
   };
 
@@ -489,6 +509,9 @@ export default function CoursePlayer() {
   if (!course) {
     return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950 text-red-500">Course not found.</div>;
   }
+
+  const isLessonComplete = currentLesson && completedLessons.has(currentLesson._id);
+  const canMarkComplete = currentLesson && !currentLesson.hasQuiz;
 
   return (
     <div className="bg-gray-100 dark:bg-gray-950 min-h-screen">
@@ -543,9 +566,23 @@ export default function CoursePlayer() {
                   <div className="space-y-8">
                     <VideoPlayer 
                         src={currentLesson.videoUrl} 
-                        onComplete={handleMarkAsComplete} 
+                        onComplete={handleVideoEnd}
                     />
                     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{currentLesson.title}</h2>
+                          <button 
+                            onClick={handleMarkAsComplete}
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-indigo-700 transition disabled:opacity-50 disabled:bg-green-600 disabled:cursor-not-allowed"
+                            disabled={isLessonComplete || !canMarkComplete}
+                            title={!canMarkComplete && !isLessonComplete ? "Complete the quiz to mark this lesson as done" : ""}
+                          >
+                            {isLessonComplete ? 'Completed' : (canMarkComplete ? 'Mark as Complete' : 'Complete Quiz First')}
+                            {!isLessonComplete && canMarkComplete && <ChevronRight size={16} />}
+                          </button>
+                        </div>
+                      </div>
                       <div className="border-b border-gray-200 dark:border-gray-700">
                           <nav className="flex gap-6 px-6">
                               <TabButton id="content" activeTab={activeTab} setActiveTab={setActiveTab} icon={BookOpen}>Content</TabButton>
