@@ -13,6 +13,7 @@ const courseRoutes = require("./routes/courseRoutes");
 const lessonRoutes = require("./routes/lessonRoutes");
 const questionRoutes = require("./routes/questionRoutes"); // ✅ Add this import
 const noteRoutes = require("./routes/noteRoutes");       // ✅ Add this import
+const quizRoutes = require("./routes/quizRoutes"); // ✅ Add this import
 
 dotenv.config();
 const app = express();
@@ -42,6 +43,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/questions", questionRoutes); // ✅ Add this line
 app.use("/api/notes", noteRoutes);         // ✅ Add this line
+app.use("/api/quizzes", quizRoutes); // ✅ Add this line to activate the quiz routes
 
 
 // 404 Not Found Handler

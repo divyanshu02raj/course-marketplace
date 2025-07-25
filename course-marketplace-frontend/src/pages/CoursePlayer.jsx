@@ -3,18 +3,19 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { PlayCircle, CheckCircle, ArrowLeft, ChevronRight, Sparkles, BookOpen, MessageSquare, Paperclip, Edit, Download, Users, Clock, Send, Save, Play, Pause, RotateCcw, RotateCw, Fullscreen, Minimize } from 'lucide-react';
+import { PlayCircle, CheckCircle, ArrowLeft, ChevronRight, Sparkles, BookOpen, MessageSquare, Paperclip, Edit, Download, Users, Clock, Send, Save, Play, Pause, RotateCcw, RotateCw, Fullscreen, Minimize, FileQuestion } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import QuizPlayerModal from '../StudentDashboardComponents/QuizPlayerModal';
 
-// --- NEW ENHANCED VIDEO PLAYER COMPONENT ---
+// --- ENHANCED VIDEO PLAYER COMPONENT ---
 const VideoPlayer = ({ src, onComplete }) => {
-    const playerContainerRef = useRef(null); // Ref for the main container
+    const playerContainerRef = useRef(null);
     const videoRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(true);
     const [playbackRate, setPlaybackRate] = useState(1);
     const [showControls, setShowControls] = useState(true);
-    const [isFullscreen, setIsFullscreen] = useState(false); // State for fullscreen
+    const [isFullscreen, setIsFullscreen] = useState(false);
     let controlTimeout;
 
     const handlePlayPause = () => {
@@ -40,7 +41,6 @@ const VideoPlayer = ({ src, onComplete }) => {
         }
     };
 
-    // ✅ New function to handle fullscreen toggle
     const handleFullscreen = () => {
         if (!document.fullscreenElement) {
             playerContainerRef.current?.requestFullscreen();
@@ -53,17 +53,12 @@ const VideoPlayer = ({ src, onComplete }) => {
         const video = videoRef.current;
         const handleKeyDown = (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            if (e.code === 'Space') {
-                e.preventDefault();
-                handlePlayPause();
-            }
+            if (e.code === 'Space') { e.preventDefault(); handlePlayPause(); }
             if (e.code === 'ArrowRight') handleSkip(10);
             if (e.code === 'ArrowLeft') handleSkip(-10);
         };
         
-        const handleFullscreenChange = () => {
-            setIsFullscreen(!!document.fullscreenElement);
-        };
+        const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
 
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         window.addEventListener('keydown', handleKeyDown);
@@ -88,19 +83,13 @@ const VideoPlayer = ({ src, onComplete }) => {
 
     return (
         <div 
-            ref={playerContainerRef} // Add ref to the main container
+            ref={playerContainerRef}
             className="relative bg-black aspect-video rounded-2xl overflow-hidden shadow-2xl"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => clearTimeout(controlTimeout)}
         >
             {src ? (
-                <video
-                    ref={videoRef}
-                    key={src}
-                    autoPlay
-                    className="w-full h-full"
-                    onClick={handlePlayPause}
-                >
+                <video ref={videoRef} key={src} autoPlay className="w-full h-full" onClick={handlePlayPause}>
                     <source src={src} type="video/mp4" />
                     Your browser does not support the video tag.
                 </video>
@@ -134,7 +123,6 @@ const VideoPlayer = ({ src, onComplete }) => {
                                     <option value="1.5">1.5x</option>
                                     <option value="2">2x</option>
                                 </select>
-                                {/* ✅ Fullscreen Button */}
                                 <button onClick={handleFullscreen} className="hover:scale-110 transition">
                                     {isFullscreen ? <Minimize size={20} /> : <Fullscreen size={20} />}
                                 </button>
@@ -380,11 +368,12 @@ export default function CoursePlayer() {
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('content');
-
   const [summary, setSummary] = useState("");
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [myNote, setMyNote] = useState("");
   const [isNoteSaving, setIsNoteSaving] = useState(false);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [quizResults, setQuizResults] = useState(null);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -443,6 +432,7 @@ export default function CoursePlayer() {
 
   const handleSetCurrentLesson = (lesson) => {
     setCurrentLesson(lesson);
+    setQuizResults(null);
     window.scrollTo(0, 0);
   };
 
@@ -483,9 +473,14 @@ export default function CoursePlayer() {
     }
   };
 
+  const handleQuizComplete = (results) => {
+    setQuizResults(results);
+    setIsQuizModalOpen(false);
+    handleMarkAsComplete();
+  };
+
   const completionPercentage = lessons.length > 0 ? (completedLessons.size / lessons.length) * 100 : 0;
-  const currentIndex = currentLesson ? lessons.findIndex(l => l._id === currentLesson._id) : -1;
-  const nextLesson = lessons[currentIndex + 1];
+  const nextLesson = currentLesson ? lessons[lessons.findIndex(l => l._id === currentLesson._id) + 1] : null;
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950 text-gray-500">Loading course player...</div>;
@@ -575,6 +570,28 @@ export default function CoursePlayer() {
                           </AnimatePresence>
                       </div>
                     </div>
+                    
+                    {currentLesson.hasQuiz && (
+                        <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex justify-between items-center">
+                            <div>
+                                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Test Your Knowledge</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Take the quiz for: {currentLesson.title}</p>
+                            </div>
+                            {quizResults ? (
+                                <div className="text-center">
+                                    <p className="text-sm text-gray-500">Your Score:</p>
+                                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                                        {quizResults.score} / {quizResults.totalQuestions}
+                                    </p>
+                                </div>
+                            ) : (
+                                <button onClick={() => setIsQuizModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition">
+                                    <FileQuestion size={16} /> Take Quiz
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {nextLesson && (
                         <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex justify-between items-center">
                             <div>
@@ -636,6 +653,12 @@ export default function CoursePlayer() {
           </aside>
         </div>
       </div>
+      <QuizPlayerModal 
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        lesson={currentLesson}
+        onQuizComplete={handleQuizComplete}
+      />
     </div>
   );
 }

@@ -17,7 +17,7 @@ const LessonSchema = new mongoose.Schema({
     required: true,
   },
   videoUrl: String,
-  content: String, // ✅ Changed from 'notes' to 'content'
+  content: String,
   order: Number,
   duration: Number,
   isPreview: {
@@ -25,6 +25,10 @@ const LessonSchema = new mongoose.Schema({
     default: false,
   },
   resources: [ResourceSchema],
+  hasQuiz: { // ✅ Add this new field
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Lesson", LessonSchema);

@@ -1,47 +1,54 @@
 // src/InstructorDashboardComponents/LessonManager.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "../api/axios";
 import toast from "react-hot-toast";
-import { PlusCircle, GripVertical, Edit, Trash2 } from "lucide-react";
-import LessonModal from "./LessonModal"; // 1. Import the modal component
+import { PlusCircle, GripVertical, Edit, Trash2, FileQuestion } from "lucide-react";
+import LessonModal from "./LessonModal";
+import QuizEditorModal from "./QuizEditorModal"; // 1. Import the new quiz modal
 
 export default function LessonManager({ courseId }) {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingLesson, setEditingLesson] = useState(null); // To hold the lesson being edited
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
 
-  const fetchLessons = async () => {
+  // 2. State for the quiz editor modal
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [quizLesson, setQuizLesson] = useState(null);
+
+  const fetchLessons = useCallback(async () => {
     if (!courseId) return;
+    setLoading(true);
     try {
-      setLoading(true);
       const response = await axios.get(`/lessons/${courseId}`);
       setLessons(response.data);
     } catch (error) {
       toast.error("Failed to fetch lessons.");
-      console.error("Fetch lessons error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId]);
 
   useEffect(() => {
     fetchLessons();
-  }, [courseId]);
+  }, [fetchLessons]);
 
-  // Open modal for creating a new lesson
   const handleAddLesson = () => {
-    setEditingLesson(null); // Ensure we are not in edit mode
-    setIsModalOpen(true);
+    setEditingLesson(null);
+    setIsLessonModalOpen(true);
   };
 
-  // Open modal for editing an existing lesson
   const handleEditLesson = (lesson) => {
     setEditingLesson(lesson);
-    setIsModalOpen(true);
+    setIsLessonModalOpen(true);
   };
 
-  // Handle lesson deletion
+  // 3. Function to open the quiz editor
+  const handleOpenQuizEditor = (lesson) => {
+    setQuizLesson(lesson);
+    setIsQuizModalOpen(true);
+  };
+
   const handleDeleteLesson = (lessonId) => {
     toast((t) => (
         <div className="flex flex-col gap-3">
@@ -54,7 +61,7 @@ export default function LessonManager({ courseId }) {
                 try {
                   await axios.delete(`/lessons/${lessonId}`);
                   toast.success("Lesson deleted.", { id: deleteToastId });
-                  fetchLessons(); // Re-fetch lessons to update the list
+                  fetchLessons();
                 } catch (error) {
                   toast.error("Failed to delete lesson.", { id: deleteToastId });
                 }
@@ -75,21 +82,18 @@ export default function LessonManager({ courseId }) {
     );
   };
 
-  // Handle saving (creating or updating) a lesson
   const handleSaveLesson = async (lessonData) => {
     try {
       if (editingLesson) {
-        // Update existing lesson
         await axios.patch(`/lessons/${editingLesson._id}`, lessonData);
         toast.success("Lesson updated successfully!");
       } else {
-        // Create new lesson
         await axios.post(`/lessons/${courseId}`, lessonData);
         toast.success("Lesson added successfully!");
       }
-      setIsModalOpen(false);
+      setIsLessonModalOpen(false);
       setEditingLesson(null);
-      fetchLessons(); // Re-fetch to show the new/updated lesson
+      fetchLessons();
     } catch (error) {
       toast.error("Failed to save lesson.");
       console.error("Save lesson error:", error);
@@ -130,30 +134,38 @@ export default function LessonManager({ courseId }) {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={() => handleEditLesson(lesson)} className="text-gray-500 hover:text-yellow-500">
+                {/* 4. Add the "Edit Quiz" button */}
+                <button onClick={() => handleOpenQuizEditor(lesson)} className="text-gray-500 hover:text-indigo-500" title="Edit Quiz">
+                  <FileQuestion size={16} />
+                </button>
+                <button onClick={() => handleEditLesson(lesson)} className="text-gray-500 hover:text-yellow-500" title="Edit Lesson">
                   <Edit size={16} />
                 </button>
-                <button onClick={() => handleDeleteLesson(lesson._id)} className="text-gray-500 hover:text-red-500">
+                <button onClick={() => handleDeleteLesson(lesson._id)} className="text-gray-500 hover:text-red-500" title="Delete Lesson">
                   <Trash2 size={16} />
                 </button>
               </div>
             </div>
           ))
         ) : (
-          <div className="text-center py-10 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-gray-500 dark:text-gray-400">No lessons have been added to this course yet.</p>
-            <p className="text-sm text-gray-400">Click "Add Lesson" to get started.</p>
+          <div className="text-center py-10 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <p className="text-gray-500 dark:text-gray-400">No lessons have been added yet.</p>
           </div>
         )}
       </div>
 
-      {/* Render the modal */}
       <LessonModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isLessonModalOpen}
+        onClose={() => setIsLessonModalOpen(false)}
         onSave={handleSaveLesson}
         lesson={editingLesson}
-        courseId={courseId}
+      />
+      
+      {/* 5. Render the new quiz modal */}
+      <QuizEditorModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        lesson={quizLesson}
       />
     </div>
   );
