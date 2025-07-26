@@ -15,6 +15,7 @@ const questionRoutes = require("./routes/questionRoutes"); // ✅ Add this impor
 const noteRoutes = require("./routes/noteRoutes");       // ✅ Add this import
 const quizRoutes = require("./routes/quizRoutes"); // ✅ Add this import
 const enrollmentRoutes = require("./routes/enrollmentRoutes"); // ✅ Add this import
+const certificateRoutes = require("./routes/certificateRoutes"); // ✅ Add this import
 
 dotenv.config();
 const app = express();
@@ -46,6 +47,7 @@ app.use("/api/questions", questionRoutes); // ✅ Add this line
 app.use("/api/notes", noteRoutes);         // ✅ Add this line
 app.use("/api/quizzes", quizRoutes); // ✅ Add this line to activate the quiz routes
 app.use("/api/enrollments", enrollmentRoutes); // ✅ Add this line
+app.use("/api/certificates", certificateRoutes); // ✅ Add this line
 
 
 // 404 Not Found Handler

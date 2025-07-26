@@ -35,9 +35,9 @@ function App() {
           {/* Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["student", "instructor"]} />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/learn/:courseId" element={<CoursePlayer />} />
-            {/* ✅ FIX: Moved CourseDetailsPage to be a protected route */}
             <Route path="/course/:courseId" element={<CourseDetailsPage />} />
+            {/* ✅ FIX: Added the missing route for the Course Player */}
+            <Route path="/learn/:courseId" element={<CoursePlayer />} />
           </Route>
           
           <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>

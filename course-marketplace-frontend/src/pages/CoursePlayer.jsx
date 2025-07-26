@@ -608,7 +608,7 @@ export default function CoursePlayer() {
                       </div>
                     </div>
                     
-                    {currentLesson.hasQuiz && (
+                    {currentLesson && currentLesson.hasQuiz && (
                         <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex justify-between items-center">
                             <div>
                                 <h3 className="font-semibold text-gray-800 dark:text-gray-200">Test Your Knowledge</h3>

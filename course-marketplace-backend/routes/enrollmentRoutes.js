@@ -1,13 +1,18 @@
 // routes/enrollmentRoutes.js
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/authMiddleware");
-const { getEnrollmentProgress, markLessonAsComplete } = require("../controllers/enrollmentController");
+const { protect, instructorOnly } = require("../middleware/authMiddleware");
+const { 
+    getEnrollmentProgress, 
+    markLessonAsComplete,
+    getEnrolledStudentsForCourse // Import the new function
+} = require("../controllers/enrollmentController");
 
-// Get a user's progress for a specific course
+// --- Student Routes ---
 router.get("/:courseId/progress", protect, getEnrollmentProgress);
-
-// Mark a lesson as complete
 router.post("/:courseId/lessons/:lessonId/complete", protect, markLessonAsComplete);
+
+// --- Instructor Route ---
+router.get("/:courseId/students", protect, instructorOnly, getEnrolledStudentsForCourse);
 
 module.exports = router;

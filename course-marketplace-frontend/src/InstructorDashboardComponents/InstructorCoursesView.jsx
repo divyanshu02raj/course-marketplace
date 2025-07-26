@@ -1,6 +1,6 @@
 // src/InstructorDashboardComponents/InstructorCoursesView.jsx
 import { useEffect, useState } from "react";
-import { Edit, Trash2, Eye, RefreshCw } from "lucide-react";
+import { Edit, Trash2, Eye, RefreshCw, Users } from "lucide-react";
 import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast"; // Import toast
@@ -28,7 +28,7 @@ export default function InstructorCoursesView() {
     fetchCourses();
   }, []);
 
-  const handleView = (id) => navigate(`/instructor/course/${id}`);
+  const handleViewStudents = (id) => navigate(`/instructor/course/manage/${id}`);
   const handleEdit = (id) => navigate(`/instructor/course/edit/${id}`);
 
   // This function will be called if the user confirms deletion
@@ -196,12 +196,12 @@ export default function InstructorCoursesView() {
  
                  <div className="flex gap-3 text-gray-500 dark:text-gray-300 mt-2 lg:mt-0">
                    <button
-                     onClick={() => handleView(course._id)}
-                     aria-label="View Course"
-                     title="View Course"
+                     onClick={() => handleViewStudents(course._id)}
+                     aria-label="View Students"
+                     title="View Students"
                      className="hover:text-blue-600"
                    >
-                     <Eye size={20} />
+                     <Users size={20} />
                    </button>
                    <button
                      onClick={() => handleEdit(course._id)}
