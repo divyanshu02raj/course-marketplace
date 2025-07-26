@@ -1,15 +1,14 @@
-// StudentDashboardComponents/CertificatesView.jsx
+// src/StudentDashboardComponents/CertificatesView.jsx
 import React, { useState } from "react";
 import { Download, Eye, Award, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 
 export default function CertificatesView({ certificates }) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredCertificates = certificates.filter((cert) => {
-    // ✅ FIX: Add a check to ensure cert.course exists before filtering.
-    // This prevents errors if a course has been deleted.
-    if (!cert.course) {
+    if (!cert || !cert.course) {
       return false;
     }
     return cert.course.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -82,10 +81,13 @@ export default function CertificatesView({ certificates }) {
                     ID: {certificate.certificateId.slice(0, 13)}...
                   </p>
                   <div className="flex gap-3 pt-3">
-                    <button className="flex-1 inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition">
+                    <Link
+                      to={`/certificate/${certificate.certificateId}`}
+                      className="flex-1 inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition"
+                    >
                       <Eye className="w-4 h-4" />
                       View
-                    </button>
+                    </Link>
                     <button className="flex-1 inline-flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg text-sm font-medium transition">
                       <Download className="w-4 h-4" />
                       Download
