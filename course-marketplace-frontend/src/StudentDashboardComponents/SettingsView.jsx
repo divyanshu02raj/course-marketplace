@@ -1,16 +1,21 @@
 // src/StudentDashboardComponents/SettingsView.jsx
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "../api/axios";
 import baseAxios from "axios";
 import { Eye, EyeOff } from "lucide-react";
-import toast from "react-hot-toast"; // 1. Import toast
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext"; // 1. Import useAuth to get global user state
 
 const CLOUD_NAME = "dg05wkeqo";
 const UPLOAD_PRESET = "profile_pictures";
 
 const SettingsView = () => {
-  const [user, setUser] = useState({ name: "", email: "", phone: "", profileImage: "" });
-  const [loading, setLoading] = useState(true);
+  // 2. Get user and updateUser function from the AuthContext
+  const { user, updateUser } = useAuth();
+  
+  // 3. Initialize local form state from the global user object
+  const [formUser, setFormUser] = useState(user);
+  
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -24,23 +29,15 @@ const SettingsView = () => {
     confirm: false,
   });
 
+  // Keep local form state in sync if global user object changes
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get("/auth/me");
-        setUser(res.data.user);
-      } catch (err) {
-        console.error("Failed to fetch user", err);
-        toast.error("Could not load user data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
+    if (user) {
+      setFormUser(user);
+    }
+  }, [user]);
 
   const handleChange = (e) => {
-    setUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handlePasswordChange = (e) => {
@@ -51,11 +48,11 @@ const SettingsView = () => {
     setSaving(true);
     const toastId = toast.loading("Saving profile...");
     try {
-      const res = await axios.patch("/auth/update", user);
+      const res = await axios.patch("/auth/update", formUser);
       toast.success("Profile updated successfully!", { id: toastId });
-      setUser(res.data.user);
+      // 4. Update the global user state with the new data from the server
+      updateUser(res.data.user);
     } catch (err) {
-      console.error("Failed to update profile:", err);
       toast.error(err.response?.data?.message || "Failed to update profile.", { id: toastId });
     } finally {
       setSaving(false);
@@ -64,22 +61,24 @@ const SettingsView = () => {
 
   const handlePasswordUpdate = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      return toast.error("Please fill in all password fields.");
+
+    // 5. Corrected validation logic
+    if (!newPassword || !confirmPassword) {
+      return toast.error("Please provide and confirm your new password.");
     }
     if (newPassword !== confirmPassword) {
       return toast.error("New passwords do not match.");
     }
+
     const toastId = toast.loading("Updating password...");
     try {
       await axios.patch("/auth/update-password", {
-        currentPassword,
+        currentPassword, // Send currentPassword even if it's empty for Google users
         newPassword,
       });
       toast.success("Password updated successfully!", { id: toastId });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
-      console.error("Password update failed:", err);
       toast.error(err.response?.data?.message || "Failed to update password.", { id: toastId });
     }
   };
@@ -98,7 +97,7 @@ const SettingsView = () => {
       const res = await baseAxios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, formData);
       const data = res.data;
       if (data.secure_url) {
-        setUser((prev) => ({ ...prev, profileImage: data.secure_url }));
+        setFormUser((prev) => ({ ...prev, profileImage: data.secure_url }));
         toast.success("Image uploaded. Click Save Changes to apply.", { id: toastId });
       } else {
         throw new Error("Upload failed");
@@ -111,30 +110,25 @@ const SettingsView = () => {
     }
   };
 
-  if (loading) {
+  if (!formUser) {
     return <div className="text-center p-10 text-gray-900 dark:text-white">Loading...</div>;
   }
 
   return (
     <div className="w-full px-6 py-10 text-gray-900 dark:text-white">
       <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-10">Account Settings</h1>
-      {/* The rest of the JSX remains the same */}
+      
       <div className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 mb-12">
         <h2 className="text-xl font-semibold mb-6">Profile Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
           <div className="flex flex-col items-center">
             <img
-              src={user.profileImage || "https://placehold.co/100x100"}
+              src={formUser.profileImage || "https://placehold.co/100x100"}
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover border-2 border-indigo-500"
             />
             <label className="mt-2">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
               <span className="cursor-pointer px-4 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 inline-block">
                 {uploading ? "Uploading..." : "Change Picture"}
               </span>
@@ -144,30 +138,21 @@ const SettingsView = () => {
             <label className="block text-sm font-medium">
               Full Name
               <input
-                type="text"
-                name="name"
-                value={user.name}
-                onChange={handleChange}
+                type="text" name="name" value={formUser.name} onChange={handleChange}
                 className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
               />
             </label>
             <label className="block text-sm font-medium">
               Email Address
               <input
-                type="email"
-                name="email"
-                value={user.email}
-                onChange={handleChange}
+                type="email" name="email" value={formUser.email} onChange={handleChange}
                 className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
               />
             </label>
             <label className="block text-sm font-medium col-span-1 sm:col-span-2">
               Phone Number
               <input
-                type="text"
-                name="phone"
-                value={user.phone}
-                onChange={handleChange}
+                type="text" name="phone" value={formUser.phone || ''} onChange={handleChange}
                 className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
               />
             </label>

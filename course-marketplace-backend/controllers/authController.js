@@ -3,7 +3,9 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require('google-auth-library');
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 /**
  * Generates a JSON Web Token for a user.
  * @param {object} user - The user object from MongoDB.
@@ -17,6 +19,60 @@ const generateToken = (user) => {
       expiresIn: "7d",
     }
   );
+};
+
+// --- NEW GOOGLE LOGIN FUNCTION ---
+exports.googleLogin = async (req, res) => {
+    const { token, role } = req.body;
+
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const { name, email, sub: googleId, picture: profileImage } = ticket.getPayload();
+
+        let user = await User.findOne({ googleId });
+
+        if (!user) {
+            user = await User.findOne({ email });
+            if (user) {
+                user.googleId = googleId;
+                user.profileImage = user.profileImage || profileImage;
+                await user.save();
+            } else {
+                user = await User.create({
+                    name,
+                    email,
+                    googleId,
+                    profileImage,
+                    role,
+                });
+            }
+        }
+
+        const jwtToken = generateToken(user);
+        res.cookie("token", jwtToken, {
+            httpOnly: true,
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        res.status(200).json({
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                profileImage: user.profileImage,
+            },
+        });
+
+    } catch (error) {
+        console.error("Google Login Error:", error);
+        res.status(400).json({ message: "Google Sign-In failed. Please try again." });
+    }
 };
 
 /**
@@ -173,47 +229,47 @@ exports.updateUser = async (req, res) => {
  * Updates the authenticated user's password.
  * Relies on the 'protect' middleware.
  */
+// --- ✅ UPDATED PASSWORD FUNCTION ---
 exports.updatePassword = async (req, res) => {
-  // The user object is securely provided by the 'protect' middleware.
   const userId = req.user._id;
   const { currentPassword, newPassword } = req.body;
 
-  if (!currentPassword || !newPassword) {
-    return res
-      .status(400)
-      .json({ message: "Both current and new passwords are required." });
+  if (!newPassword) {
+    return res.status(400).json({ message: "New password is required." });
   }
 
-  // Password strength check
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
   if (!passwordRegex.test(newPassword)) {
     return res.status(400).json({
-      message:
-        "Password must be at least 8 characters, with one uppercase letter and one number.",
+      message: "Password must be at least 8 characters, with one uppercase letter and one number.",
     });
   }
 
   try {
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    // If the user has a password, we must verify their current one.
+    if (user.password) {
+        if (!currentPassword) {
+            return res.status(400).json({ message: "Current password is required to make this change." });
+        }
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Current password is incorrect." });
+        }
+    }
+    // If user.password is null/undefined (e.g., a Google user), we skip the check.
+
+    // Check if the new password is the same as the old one (if an old one exists)
+    if (user.password) {
+        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        if (isSamePassword) {
+            return res.status(400).json({ message: "New password must be different from the current one." });
+        }
     }
 
-    // Check if the current password is correct
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Current password is incorrect." });
-    }
-
-    // Check if the new password is the same as the old one
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
-    if (isSamePassword) {
-      return res
-        .status(400)
-        .json({ message: "New password must be different from the current one." });
-    }
-
-    // Hash and save the new password (pre-save hook will handle hashing)
+    // Set and hash the new password. The pre-save hook in User.js will handle hashing.
     user.password = newPassword;
     await user.save();
 

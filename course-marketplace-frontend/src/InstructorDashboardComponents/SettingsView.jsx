@@ -1,19 +1,16 @@
 // src/InstructorDashboardComponents/SettingsView.jsx
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "../api/axios";
 import baseAxios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAuth } from "../context/AuthContext"; // 1. Import useAuth from context
+import { useAuth } from "../context/AuthContext";
 
 const CLOUD_NAME = "dg05wkeqo";
 const UPLOAD_PRESET = "profile_pictures";
 
 const InstructorSettingsView = () => {
-  // 2. Get user and the new updateUser function from context
-  const { user, updateUser, loading: authLoading } = useAuth();
-
-  // 3. Use local state for form inputs, initialized from the context user
+  const { user, updateUser } = useAuth();
   const [formUser, setFormUser] = useState(user);
   
   const [saving, setSaving] = useState(false);
@@ -29,7 +26,6 @@ const InstructorSettingsView = () => {
     confirm: false,
   });
 
-  // 4. This effect ensures the form state is in sync with the global user state
   useEffect(() => {
     if (user) {
       setFormUser(user);
@@ -50,10 +46,8 @@ const InstructorSettingsView = () => {
     try {
       const res = await axios.patch("/auth/update", formUser);
       toast.success("Profile updated successfully!", { id: toastId });
-      // 5. Call the updateUser function from context to update the global state
       updateUser(res.data.user);
     } catch (err) {
-      console.error("Failed to update profile:", err);
       toast.error(err.response?.data?.message || "Failed to update profile.", { id: toastId });
     } finally {
       setSaving(false);
@@ -62,23 +56,24 @@ const InstructorSettingsView = () => {
 
   const handlePasswordUpdate = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      return toast.error("Please fill in all password fields.");
+
+    // ✅ Corrected Validation Logic
+    if (!newPassword || !confirmPassword) {
+      return toast.error("Please provide and confirm your new password.");
     }
     if (newPassword !== confirmPassword) {
       return toast.error("New passwords do not match.");
     }
-    
+
     const toastId = toast.loading("Updating password...");
     try {
       await axios.patch("/auth/update-password", {
-        currentPassword,
+        currentPassword, // Send it even if it's empty
         newPassword,
       });
       toast.success("Password updated successfully!", { id: toastId });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
-      console.error("Password update failed:", err);
       toast.error(err.response?.data?.message || "Failed to update password.", { id: toastId });
     }
   };
@@ -97,7 +92,6 @@ const InstructorSettingsView = () => {
       const res = await baseAxios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, formData);
       const data = res.data;
       if (data.secure_url) {
-        // Update local form state immediately for preview
         setFormUser((prev) => ({ ...prev, profileImage: data.secure_url }));
         toast.success("Image uploaded. Click Save Changes to apply.", { id: toastId });
       } else {
@@ -111,8 +105,7 @@ const InstructorSettingsView = () => {
     }
   };
 
-  // Use the loading state from the context
-  if (authLoading || !formUser) {
+  if (!formUser) {
     return <div className="text-center p-10 text-gray-900 dark:text-white">Loading...</div>;
   }
 
@@ -163,7 +156,7 @@ const InstructorSettingsView = () => {
               <input
                 type="text"
                 name="phone"
-                value={formUser.phone}
+                value={formUser.phone || ''}
                 onChange={handleChange}
                 className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500"
               />
