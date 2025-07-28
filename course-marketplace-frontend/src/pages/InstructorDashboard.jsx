@@ -89,7 +89,15 @@ export default function InstructorDashboard() {
           </button>
         </div>
 
-        <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-8">🎓 CourseHub</h1>
+        <div className="mb-8 flex items-center justify-center">
+<img
+  src={theme === "dark" ? "/full noBgColor.png" : "/full noBgBlack.png"}
+  alt="Logo"
+  className="h-16 object-contain"
+  style={{ maxWidth: "220px" }}
+/>
+
+</div>
         <nav className="flex-1 space-y-4 overflow-y-auto">
           {menu.map((item) => (
             <button

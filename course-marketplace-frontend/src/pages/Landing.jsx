@@ -1,4 +1,4 @@
-// course-marketplace-frontend\src\pages\Landing.jsx
+// src/pages/Landing.jsx
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { GraduationCap, Video, Star, Users } from "lucide-react";
@@ -9,7 +9,7 @@ const testimonials = [
   {
     name: "Emily Tran",
     quote:
-      "CourseHub made it so easy to switch careers. The quality of the instructors is top-notch!",
+      "SharedSlate made it so easy to switch careers. The quality of the instructors is top-notch!",
     avatar: "https://i.pravatar.cc/100?img=5",
   },
   {
@@ -42,12 +42,15 @@ export default function Landing() {
       />
 
       {/* Header */}
-      <header className="absolute top-0 left-0 w-full px-8 py-6 flex justify-between items-center z-20">
-        <h1 className="text-2xl font-bold text-indigo-300 drop-shadow">🎓 CourseHub</h1>
-        <Link to="/login" className="text-indigo-400 hover:underline font-medium transition hover:text-indigo-300">
-          Login
-        </Link>
-      </header>
+     <header className="absolute top-0 left-0 w-full px-8 py-6 flex justify-between items-center z-20">
+  {/* New Logo Image */}
+    <img src="full noBgColor.png" alt="SharedSlate Logo" className="w-32 h-auto" />
+
+  <Link to="/login" className="text-indigo-400 hover:underline font-medium transition hover:text-indigo-300">
+    Login
+  </Link>
+</header>
+
 
       {/* Hero */}
       <main className="pt-40 pb-32 px-6 md:px-20 relative z-10">
@@ -61,7 +64,7 @@ export default function Landing() {
               Empower Your <span className="text-indigo-400">Learning</span> Journey
             </h2>
             <p className="text-gray-400 text-lg mb-8 max-w-md">
-              Join CourseHub to explore, teach, and master in-demand skills — all in one elegant platform.
+              Join SharedSlate to explore, teach, and master in-demand skills — all in one elegant platform.
             </p>
             <div className="flex gap-4">
               <Link
@@ -92,7 +95,7 @@ export default function Landing() {
 
       {/* Features */}
       <section className="py-24 px-6 md:px-20 relative z-10">
-        <h2 className="text-3xl font-bold text-center text-indigo-300 mb-16">Why Choose CourseHub?</h2>
+        <h2 className="text-3xl font-bold text-center text-indigo-300 mb-16">Why Choose SharedSlate?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 max-w-6xl mx-auto">
           <Feature icon={<GraduationCap />} title="Learn Anything" desc="Thousands of courses from top instructors." />
           <Feature icon={<Video />} title="Video Lessons" desc="Stream high-quality video content anytime." />
@@ -139,7 +142,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="text-center text-sm text-gray-500 py-8 border-t border-white/10 backdrop-blur-sm z-10 relative">
-        &copy; {new Date().getFullYear()} CourseHub. All rights reserved.
+        &copy; {new Date().getFullYear()} SharedSlate. All rights reserved.
       </footer>
     </div>
   );
@@ -150,7 +153,7 @@ function Feature({ icon, title, desc }) {
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0. }}
+      transition={{ duration: 0.5 }}
       viewport={{ once: true }}
       whileHover={{ scale: 1.05 }}
       className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl text-center transition-transform"

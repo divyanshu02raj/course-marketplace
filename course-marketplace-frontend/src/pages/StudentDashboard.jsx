@@ -9,6 +9,7 @@ import useTheme from "../hooks/useTheme";
 import axios from "../api/axios";
 import toast from "react-hot-toast";
 
+
 import CoursesView from "../StudentDashboardComponents/CoursesView";
 import MyCourses from "../StudentDashboardComponents/MyCourses";
 import CertificatesView from "../StudentDashboardComponents/CertificatesView";
@@ -104,7 +105,18 @@ export default function StudentDashboard() {
             <X size={24} />
           </button>
         </div>
-        <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-8">🎓 CourseHub</h1>
+<div className="mb-8 flex items-center justify-center">
+<img
+  src={theme === "dark" ? "/full noBgColor.png" : "/full noBgBlack.png"}
+  alt="Logo"
+  className="h-16 object-contain"
+  style={{ maxWidth: "220px" }}
+/>
+
+</div>
+
+
+
         <nav className="flex-1 space-y-4">
           {menu.map((item) => (
             <button
@@ -137,17 +149,49 @@ export default function StudentDashboard() {
             </button>
             <div className="flex-1"></div>
             <div className="flex items-center gap-4">
-                <div className="relative">
-                    <button onClick={() => setShowNotifications(!showNotifications)} className="relative p-2">
-                        <Bell className="text-gray-500 dark:text-gray-400 w-6 h-6" />
-                        {unreadCount > 0 && <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />}
-                    </button>
-                    {showNotifications && (
-                        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50">
-                            {/* ... notification dropdown ... */}
-                        </div>
+                {/* Notifications */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2"
+              >
+                <Bell className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white w-6 h-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute top-full left-1/2 -translate-x-[60%] mt-2 w-[90vw] max-w-xs bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 sm:left-auto sm:right-0 sm:translate-x-0 sm:w-80">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 font-semibold">
+                    Notifications
+                  </div>
+                  <ul className="max-h-60 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
+                    {notifications.length ? (
+                      notifications.map((note, i) => (
+                        <li
+                          key={i}
+                          className="p-4 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-800 dark:text-gray-300"
+                        >
+                          <p className="text-black dark:text-white font-medium">
+                            {note.title}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {note.time}
+                          </p>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-4 text-gray-500 text-sm text-center">No notifications</li>
                     )}
+                  </ul>
+                  <div className="p-3 text-center text-sm border-t border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                    View All
+                  </div>
                 </div>
+              )}
+            </div>
+
                 <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
                     {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-blue-600" />}
                 </button>
@@ -173,3 +217,4 @@ export default function StudentDashboard() {
     </div>
   );
 }
+

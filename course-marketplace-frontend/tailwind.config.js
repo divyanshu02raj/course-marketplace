@@ -3,7 +3,11 @@ module.exports = {
   darkMode: "class", // or 'media'
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+  fontFamily: {
+    serif: ['"Playfair Display"', 'serif'],
+  },
+}
   },
   plugins: [],
 }
