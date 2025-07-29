@@ -246,7 +246,7 @@ export default function EditCourseView() {
                 </div>
               </div>
               <FormField
-                icon={<DollarSign size={18} />} label="Price (USD)" name="price" type="number" value={course.price}
+                icon={<DollarSign size={18} />} label="Price (INR)" name="price" type="number" value={course.price}
                 onChange={handleInputChange} placeholder="e.g., 49.99"
               />
               <div>

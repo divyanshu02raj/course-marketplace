@@ -142,7 +142,7 @@ export default function CreateCourseView() {
              {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
            </div>
            <div>
-             <label className="block text-sm font-medium mb-2">Price (USD)</label>
+             <label className="block text-sm font-medium mb-2">Price (INR)</label>
              <input
                type="number"
                min="0"
