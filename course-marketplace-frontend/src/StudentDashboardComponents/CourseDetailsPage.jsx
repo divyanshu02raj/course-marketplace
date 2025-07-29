@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Clock, BarChart, Video, CheckCircle, Lock, Bookmark, Target } from 'lucide-react'; // ✅ Corrected: Added Target icon
+import { ArrowLeft, Clock, BarChart, Video, CheckCircle, Lock, Bookmark, Target } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 // Accordion Item Component
@@ -65,16 +65,60 @@ export default function CourseDetailsPage() {
 
   const handleEnroll = async () => {
     if (!user) {
-        toast.error("Please log in to enroll in a course.");
+        toast.error("Please log in to enroll.");
         return navigate('/login');
     }
-    const toastId = toast.loading("Enrolling...");
+
+    const toastId = toast.loading("Initializing payment...");
+
     try {
-        await axios.post(`/courses/${courseId}/enroll`);
-        toast.success("Successfully enrolled!", { id: toastId });
-        setIsEnrolled(true);
+        // Step 1: Create an order on your backend
+        const orderResponse = await axios.post('/payments/create-order', { courseId });
+        const order = orderResponse.data;
+
+        toast.dismiss(toastId);
+
+        // Step 2: Configure Razorpay options
+        const options = {
+            key: process.env.REACT_APP_RAZORPAY_KEY_ID,
+            amount: order.amount,
+            currency: order.currency,
+            name: "SharedSlate",
+            description: `Enrollment for ${course.title}`,
+            image: "https://example.com/your_logo.png", // Optional: Add your logo URL
+            order_id: order.id,
+            // Step 3: This handler function is called after payment
+            handler: async function (response) {
+                const verifyToastId = toast.loading("Verifying payment...");
+                try {
+                    // Step 4: Verify the payment on your backend
+                    await axios.post(`/payments/verify/${courseId}`, {
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                    });
+                    toast.success("Enrollment successful!", { id: verifyToastId });
+                    setIsEnrolled(true); // Update the UI
+                } catch (verifyError) {
+                    toast.error("Payment verification failed. Please contact support.", { id: verifyToastId });
+                }
+            },
+            prefill: {
+                name: user.name,
+                email: user.email,
+                contact: user.phone || ''
+            },
+            theme: {
+                color: "#4F46E5" // Indigo color
+            }
+        };
+
+        // Step 5: Open the Razorpay checkout modal
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+
     } catch (error) {
-        toast.error(error.response?.data?.message || "Enrollment failed.", { id: toastId });
+        toast.error(error.response?.data?.message || "Could not start payment process.", { id: toastId });
     }
   };
 
@@ -140,7 +184,7 @@ export default function CourseDetailsPage() {
               <div className="bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl">
                 <img src={course.thumbnail} alt={course.title} className="w-full rounded-t-2xl aspect-video object-cover" />
                 <div className="p-6">
-                  <p className="text-4xl font-bold text-gray-800 dark:text-white mb-4">${course.price}</p>
+                  <p className="text-4xl font-bold text-gray-800 dark:text-white mb-4">₹{course.price}</p>
                   
                   {isEnrolled ? (
                     <Link to={`/learn/${course._id}`} className="w-full block text-center py-3 px-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">

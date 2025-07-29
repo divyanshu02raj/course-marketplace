@@ -1,23 +1,26 @@
 // course-marketplace-backend/server.js
-// course-marketplace-backend/server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+
+// ✅ FIX: Load environment variables at the very top
+dotenv.config();
+
 const connectDB = require("./config/db");
 
 // Import all your route files
 const authRoutes = require("./routes/authRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const lessonRoutes = require("./routes/lessonRoutes");
-const questionRoutes = require("./routes/questionRoutes"); // ✅ Add this import
-const noteRoutes = require("./routes/noteRoutes");       // ✅ Add this import
-const quizRoutes = require("./routes/quizRoutes"); // ✅ Add this import
-const enrollmentRoutes = require("./routes/enrollmentRoutes"); // ✅ Add this import
-const certificateRoutes = require("./routes/certificateRoutes"); // ✅ Add this import
+const questionRoutes = require("./routes/questionRoutes");
+const noteRoutes = require("./routes/noteRoutes");
+const quizRoutes = require("./routes/quizRoutes");
+const enrollmentRoutes = require("./routes/enrollmentRoutes");
+const certificateRoutes = require("./routes/certificateRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
-dotenv.config();
 const app = express();
 
 // Middlewares
@@ -25,7 +28,6 @@ app.use(express.json());
 app.use(cookieParser());
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
-
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -43,11 +45,12 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/lessons", lessonRoutes);
-app.use("/api/questions", questionRoutes); // ✅ Add this line
-app.use("/api/notes", noteRoutes);         // ✅ Add this line
-app.use("/api/quizzes", quizRoutes); // ✅ Add this line to activate the quiz routes
-app.use("/api/enrollments", enrollmentRoutes); // ✅ Add this line
-app.use("/api/certificates", certificateRoutes); // ✅ Add this line
+app.use("/api/questions", questionRoutes);
+app.use("/api/notes", noteRoutes);
+app.use("/api/quizzes", quizRoutes);
+app.use("/api/enrollments", enrollmentRoutes);
+app.use("/api/certificates", certificateRoutes);
+app.use("/api/payments", paymentRoutes);
 
 
 // 404 Not Found Handler

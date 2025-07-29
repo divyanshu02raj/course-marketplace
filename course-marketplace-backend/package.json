@@ -20,6 +20,7 @@
     "google-auth-library": "^10.2.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.1",
+    "razorpay": "^2.9.6",
     "uuid": "^11.1.0"
   }
 }
