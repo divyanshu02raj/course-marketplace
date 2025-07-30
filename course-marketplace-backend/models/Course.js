@@ -7,11 +7,24 @@ const CourseSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  title: String,
-  shortDesc: String,
-  description: String,
-  category: String,
-  price: Number,
+  title: {
+    type: String,
+    required: true,
+  },
+  shortDesc: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
+  category: {
+    type: String,
+  },
+  price: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
   thumbnail: {
     type: String,
     default: "",
@@ -21,7 +34,6 @@ const CourseSchema = new mongoose.Schema({
     enum: ["draft", "published", "unpublished"],
     default: "draft",
   },
-  // --- New Fields ---
   whatYouWillLearn: {
     type: [String],
     default: [],
@@ -38,10 +50,16 @@ const CourseSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   }],
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  
+  // ✅ NEW Fields for ratings and reviews
+  averageRating: {
+    type: Number,
+    default: 0,
   },
-});
+  numReviews: {
+    type: Number,
+    default: 0,
+  },
+}, { timestamps: true }); // Using timestamps will automatically add createdAt and updatedAt fields
 
 module.exports = mongoose.model("Course", CourseSchema);

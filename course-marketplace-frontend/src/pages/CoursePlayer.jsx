@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import QuizPlayerModal from '../StudentDashboardComponents/QuizPlayerModal';
 
+import ReviewModal from '../StudentDashboardComponents/ReviewModal'; // 1. Import the new modal
 // --- ENHANCED VIDEO PLAYER COMPONENT ---
 const VideoPlayer = ({ src, onComplete }) => {
     const playerContainerRef = useRef(null);
@@ -367,6 +368,7 @@ export default function CoursePlayer() {
   const [currentLesson, setCurrentLesson] = useState(null);
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const [loading, setLoading] = useState(true);
+   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
   const [summary, setSummary] = useState("");
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
@@ -456,9 +458,11 @@ export default function CoursePlayer() {
         const currentIndex = lessons.findIndex(l => l._id === currentLesson._id);
         const nextLesson = lessons[currentIndex + 1];
         if (nextLesson) {
-            handleSetCurrentLesson(nextLesson);
+            setCurrentLesson(nextLesson);
         } else {
             toast.success("Congratulations! You've completed the course!");
+            // ✅ 3. Open the review modal when the course is finished
+            setIsReviewModalOpen(true);
         }
     } catch (error) {
         toast.error("Couldn't save progress. Please try again.");
@@ -695,6 +699,15 @@ export default function CoursePlayer() {
         onClose={() => setIsQuizModalOpen(false)}
         lesson={currentLesson}
         onQuizComplete={handleQuizComplete}
+      />
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        course={course}
+        onReviewSubmitted={() => {
+            // You could add logic here to refetch course data to show an updated rating
+            console.log("Review submitted!");
+        }}
       />
     </div>
   );

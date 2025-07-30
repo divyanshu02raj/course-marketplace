@@ -21,6 +21,7 @@ const enrollmentRoutes = require("./routes/enrollmentRoutes");
 const certificateRoutes = require("./routes/certificateRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const earningsRoutes = require("./routes/earningsRoutes"); // ✅ Add this import
+const reviewRoutes = require("./routes/reviewRoutes"); // ✅ Add this import
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/earnings", earningsRoutes); // ✅ Add this line
+app.use("/api/reviews", reviewRoutes); // ✅ Add this line
 
 
 // 404 Not Found Handler
