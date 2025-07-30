@@ -132,7 +132,48 @@ export default function CourseDetailsPage() {
   }, [courseId, user]);
 
   const handleEnroll = async () => {
-    // ... enrollment logic ...
+    if (!user) {
+        toast.error("Please log in to enroll.");
+        return navigate('/login');
+    }
+
+    const toastId = toast.loading("Initializing payment...");
+    try {
+        const orderResponse = await axios.post('/payments/create-order', { courseId });
+        const order = orderResponse.data;
+        toast.dismiss(toastId);
+
+        const options = {
+            key: process.env.REACT_APP_RAZORPAY_KEY_ID,
+            amount: order.amount,
+            currency: order.currency,
+            name: "SharedSlate",
+            description: `Enrollment for ${course.title}`,
+            image: course.thumbnail,
+            order_id: order.id,
+            handler: async function (response) {
+                const verifyToastId = toast.loading("Verifying payment...");
+                try {
+                    await axios.post(`/payments/verify/${courseId}`, {
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                    });
+                    toast.success("Enrollment successful!", { id: verifyToastId });
+                    setIsEnrolled(true);
+                } catch (verifyError) {
+                    toast.error("Payment verification failed.", { id: verifyToastId });
+                }
+            },
+            prefill: { name: user.name, email: user.email, contact: user.phone || '' },
+            theme: { color: "#4F46E5" }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+    } catch (error) {
+        toast.error(error.response?.data?.message || "Could not start payment process.", { id: toastId });
+    }
   };
 
   if (loading) {
