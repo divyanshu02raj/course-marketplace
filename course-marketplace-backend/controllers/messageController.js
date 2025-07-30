@@ -4,6 +4,33 @@ const Message = require('../models/Message');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 
+// ✅ NEW: Find or create a direct conversation between two users
+exports.findOrCreateConversation = async (req, res) => {
+    const { recipientId } = req.body;
+    const senderId = req.user._id;
+
+    try {
+        let conversation = await Conversation.findOne({
+            participants: { $all: [senderId, recipientId] },
+            course: null // Ensure it's a direct message conversation
+        });
+
+        if (!conversation) {
+            conversation = new Conversation({
+                participants: [senderId, recipientId],
+            });
+            await conversation.save();
+        }
+        
+        // Populate participants' details before sending back
+        await conversation.populate('participants', 'name profileImage');
+        res.status(200).json(conversation);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error finding or creating conversation." });
+    }
+};
+
 // Get all conversations for the logged-in user
 exports.getConversations = async (req, res) => {
     try {
@@ -36,10 +63,9 @@ exports.sendMessage = async (req, res) => {
         const { recipientId, text } = req.body;
         const senderId = req.user._id;
 
-        // Find if a conversation already exists between these two users
         let conversation = await Conversation.findOne({
             participants: { $all: [senderId, recipientId] },
-            course: null // Ensure it's a direct message, not a course broadcast
+            course: null
         });
 
         if (!conversation) {
@@ -85,12 +111,11 @@ exports.sendBroadcastMessage = async (req, res) => {
         const enrollments = await Enrollment.find({ course: courseId }).select('user');
         const studentIds = enrollments.map(e => e.user);
 
-        // A broadcast conversation includes the instructor and all students
         const participants = [instructorId, ...studentIds];
 
         const conversation = new Conversation({
             participants,
-            course: courseId, // Link this conversation to the course
+            course: courseId,
         });
 
         const newMessage = new Message({

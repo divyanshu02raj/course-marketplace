@@ -6,19 +6,17 @@ const {
     getConversations, 
     getMessagesForConversation, 
     sendMessage,
-    sendBroadcastMessage
+    sendBroadcastMessage,
+    findOrCreateConversation // ✅ 1. Import the new function
 } = require("../controllers/messageController");
 
-// Get all conversations for the logged-in user
+// ✅ 2. Add the new route for starting a conversation
+router.post("/conversation", protect, findOrCreateConversation);
+
+// --- Existing Routes ---
 router.get("/", protect, getConversations);
-
-// Get all messages for a specific conversation
 router.get("/:conversationId", protect, getMessagesForConversation);
-
-// Send a new direct message
 router.post("/", protect, sendMessage);
-
-// Send a broadcast message to a course (instructors only)
 router.post("/broadcast/:courseId", protect, instructorOnly, sendBroadcastMessage);
 
 module.exports = router;

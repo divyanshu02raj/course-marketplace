@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Search, User, Users } from 'lucide-react';
+import { ArrowLeft, Search, User, Users,MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ManageCourseView() {
@@ -32,6 +32,19 @@ export default function ManageCourseView() {
         };
         fetchData();
     }, [courseId]);
+
+        const handleStartConversation = async (studentId) => {
+        const toastId = toast.loading("Starting conversation...");
+        try {
+            const res = await axios.post('/messages/conversation', {
+                recipientId: studentId
+            });
+            toast.dismiss(toastId);
+            navigate('/dashboard', { state: { openChatId: res.data._id } });
+        } catch (error) {
+            toast.error("Could not start conversation.", { id: toastId });
+        }
+    };
 
     const filteredEnrollments = enrollments.filter(enrollment =>
         enrollment.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -110,6 +123,11 @@ export default function ManageCourseView() {
                                 <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
                                     <div className="bg-indigo-600 h-2 rounded-full" style={{width: `${progress || 0}%`}}></div>
                                 </div>
+                            </div>
+                            <div className="w-full sm:w-auto flex-shrink-0">
+                                <button onClick={() => handleStartConversation(user._id)} className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:underline">
+                                    <MessageCircle size={16} /> Message
+                                </button>
                             </div>
                         </motion.div>
                     )) : (

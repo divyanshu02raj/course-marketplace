@@ -3,15 +3,17 @@ const Question = require("../models/Question");
 const Course = require("../models/Course");
 const mongoose = require("mongoose");
 
-// Get all unanswered questions for an instructor's courses
+// ✅ NEW Function: Get all unanswered questions for an instructor's courses
 exports.getUnansweredQuestionsForInstructor = async (req, res) => {
     try {
+        // Find all courses taught by the logged-in instructor
         const instructorCourses = await Course.find({ instructor: req.user._id }).select('_id');
         const courseIds = instructorCourses.map(c => c._id);
 
+        // Find all questions in those courses that have no answers yet
         const questions = await Question.find({
             course: { $in: courseIds },
-            answers: { $size: 0 }
+            answers: { $size: 0 } // Finds docs where 'answers' array is empty
         })
         .populate("user", "name profileImage")
         .populate("course", "title")

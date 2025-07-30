@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Clock, BarChart, Video, CheckCircle, Lock, Bookmark, Target, Star, Users, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Clock, BarChart, Video, CheckCircle, Lock, Bookmark, Target, Star, Users, Sun, Moon,MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import useTheme from '../hooks/useTheme';
 import { motion, useSpring, useTransform, useScroll } from 'framer-motion';
@@ -131,6 +131,22 @@ export default function CourseDetailsPage() {
     fetchCourseData();
   }, [courseId, user]);
 
+  
+  const handleStartConversation = async () => {
+    if (!user) return navigate('/login');
+    const toastId = toast.loading("Starting conversation...");
+    try {
+        const res = await axios.post('/messages/conversation', {
+            recipientId: course.instructor._id
+        });
+        toast.dismiss(toastId);
+        // Navigate to dashboard and pass the conversation ID to open it automatically
+        navigate('/dashboard', { state: { openChatId: res.data._id } });
+    } catch (error) {
+        toast.error("Could not start conversation.", { id: toastId });
+    }
+  };
+
   const handleEnroll = async () => {
     if (!user) {
         toast.error("Please log in to enroll.");
@@ -238,6 +254,9 @@ export default function CourseDetailsPage() {
                         <div className="flex items-center gap-4 mb-6">
                             <StarRating rating={course.averageRating} size={20} />
                             <span className="text-gray-500 dark:text-gray-400">({course.numReviews} ratings)</span>
+                            <button onClick={handleStartConversation} className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:underline">
+                    <MessageSquare size={16} /> Message Instructor
+                </button>
                         </div>
                     </div>
 
