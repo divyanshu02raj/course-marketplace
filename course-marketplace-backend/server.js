@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const http = require('http'); // 1. Import http
+const { Server } = require("socket.io"); // 2. Import socket.io
 
 // ✅ FIX: Load environment variables at the very top
 dotenv.config();
@@ -26,10 +28,53 @@ const reviewRoutes = require("./routes/reviewRoutes"); // ✅ Add this import
 const messageRoutes = require("./routes/messageRoutes"); // ✅ Add this import
 
 const app = express();
+const server = http.createServer(app);
 
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
+
+
+const io = new Server(server, {
+  cors: {
+    origin: process.env.ALLOWED_ORIGINS?.split(","),
+    methods: ["GET", "POST"],
+  },
+});
+
+// 5. Set up the real-time connection logic
+let onlineUsers = new Map(); // To track online users
+
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  // When a user connects, they send their userId to join a private room
+  socket.on("addUser", (userId) => {
+    onlineUsers.set(userId, socket.id);
+    console.log(`User ${userId} is online.`);
+  });
+
+  // When a user disconnects
+  socket.on("disconnect", () => {
+    console.log("A user disconnected:", socket.id);
+    // Remove user from onlineUsers map
+    for (let [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) {
+        onlineUsers.delete(userId);
+        break;
+      }
+    }
+  });
+});
+
+
+// 6. Make the io instance available to your controllers
+// This is a simple middleware that attaches 'io' and 'onlineUsers' to every request
+app.use((req, res, next) => {
+  req.io = io;
+  req.onlineUsers = onlineUsers;
+  next();
+});
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 app.use(

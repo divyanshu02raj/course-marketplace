@@ -67,7 +67,6 @@ const DirectMessagesView = ({ openChatId }) => {
         if (!recipient) return toast.error("Recipient not found.");
         
         const tempMessageId = Date.now();
-        // ✅ FIX: Create the optimistic message with the correct sender ID structure
         const sentMessage = { 
             _id: tempMessageId, 
             sender: { _id: user.id, name: user.name, profileImage: user.profileImage }, 
@@ -115,35 +114,34 @@ const DirectMessagesView = ({ openChatId }) => {
             </aside>
 
             {/* Message Area */}
-            <main className="w-2/3 flex flex-col">
+            <main className="w-2/3 flex flex-col bg-gray-50 dark:bg-gray-800/50">
                 <AnimatePresence mode="wait">
                     {selectedConversation ? (
                         <motion.div key={selectedConversation._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col h-full">
-                            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3">
+                            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 bg-white dark:bg-gray-900">
                                 <img src={selectedConversation.participants.find(p => p._id !== user.id)?.profileImage || `https://i.pravatar.cc/40?u=${selectedConversation.participants.find(p => p._id !== user.id)?._id}`} alt="avatar" className="w-10 h-10 rounded-full"/>
                                 <h3 className="font-bold text-gray-800 dark:text-white">{selectedConversation.participants.find(p => p._id !== user.id)?.name}</h3>
                             </div>
                             <div className="flex-grow overflow-y-auto p-6 space-y-4">
                                 {messages.map(msg => (
-                                    // ✅ FIX: Compare sender._id with user.id for correct alignment
                                     <div key={msg._id} className={`flex items-end gap-2 ${msg.sender?._id === user.id ? 'justify-end' : 'justify-start'}`}>
                                         {msg.sender?._id !== user.id && <img src={msg.sender.profileImage || `https://i.pravatar.cc/40?u=${msg.sender._id}`} alt="sender" className="w-8 h-8 rounded-full"/>}
-                                        <div className={`max-w-xs lg:max-w-md p-3 rounded-2xl ${msg.sender?._id === user.id ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
+                                        <div className={`max-w-xs lg:max-w-md p-3 rounded-2xl ${msg.sender?._id === user.id ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none shadow-sm'}`}>
                                             <p>{msg.text}</p>
                                         </div>
                                     </div>
                                 ))}
                                 <div ref={messagesEndRef} />
                             </div>
-                            <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center gap-2">
+                            <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 bg-white dark:bg-gray-900">
                                 <input
                                     type="text"
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     placeholder="Type a message..."
-                                    className="flex-grow p-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                                    className="flex-grow p-3 bg-gray-100 dark:bg-gray-800 border border-transparent rounded-full focus:ring-2 focus:ring-indigo-500 outline-none transition"
                                 />
-                                <button type="submit" className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition">
+                                <button type="submit" className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-md">
                                     <Send size={20} />
                                 </button>
                             </form>

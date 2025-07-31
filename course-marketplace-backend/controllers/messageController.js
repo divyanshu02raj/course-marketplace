@@ -96,6 +96,51 @@ exports.sendMessage = async (req, res) => {
     }
 };
 
+exports.sendMessage = async (req, res) => {
+    try {
+        const { recipientId, text } = req.body;
+        const senderId = req.user._id;
+
+        let conversation = await Conversation.findOne({
+            participants: { $all: [senderId, recipientId] },
+            course: null
+        });
+
+        if (!conversation) {
+            conversation = new Conversation({
+                participants: [senderId, recipientId],
+            });
+        }
+
+        const newMessage = new Message({
+            conversation: conversation._id,
+            sender: senderId,
+            text,
+            readBy: [senderId]
+        });
+        
+        conversation.lastMessage = {
+            text,
+            sender: senderId,
+            timestamp: new Date()
+        };
+
+        await Promise.all([newMessage.save(), conversation.save()]);
+        
+        await newMessage.populate('sender', 'name profileImage');
+
+        // ✅ Real-time logic: Emit the message to the recipient if they are online
+        const recipientSocketId = req.onlineUsers.get(recipientId);
+        if (recipientSocketId) {
+            req.io.to(recipientSocketId).emit("newMessage", newMessage);
+        }
+
+        res.status(201).json(newMessage);
+    } catch (error) {
+        res.status(500).json({ message: "Error sending message." });
+    }
+};
+
 // Send a broadcast message to all students in a course
 exports.sendBroadcastMessage = async (req, res) => {
     const { courseId } = req.params;
