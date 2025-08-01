@@ -4,11 +4,13 @@ import axios from "../api/axios";
 import toast from "react-hot-toast";
 import { MessageSquare, HelpCircle, Send } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext"; // 1. Import the socket hook
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Direct Messages Tab Component ---
 const DirectMessagesView = ({ openChatId }) => {
     const { user } = useAuth();
+    const socket = useSocket(); // 2. Get the socket instance
     const [conversations, setConversations] = useState([]);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -23,6 +25,37 @@ const DirectMessagesView = ({ openChatId }) => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // ✅ 3. This is the corrected real-time listener.
+    const selectedConversationRef = useRef(selectedConversation);
+    useEffect(() => {
+        selectedConversationRef.current = selectedConversation;
+    }, [selectedConversation]);
+
+    useEffect(() => {
+        if (socket) {
+            const handleNewMessage = (message) => {
+                const currentConvo = selectedConversationRef.current;
+                if (currentConvo && message.conversation === currentConvo._id) {
+                    setMessages(prev => [...prev, message]);
+                }
+                setConversations(prevConvos => {
+                    return prevConvos.map(convo => {
+                        if (convo._id === message.conversation) {
+                            return { ...convo, lastMessage: { text: message.text, timestamp: message.createdAt } };
+                        }
+                        return convo;
+                    }).sort((a, b) => new Date(b.lastMessage.timestamp) - new Date(a.lastMessage.timestamp));
+                });
+            };
+
+            socket.on("newMessage", handleNewMessage);
+
+            return () => {
+                socket.off("newMessage", handleNewMessage);
+            };
+        }
+    }, [socket]);
 
     const selectConversation = useCallback(async (conversation) => {
         if (!conversation || selectedConversation?._id === conversation._id) return;
@@ -160,6 +193,7 @@ const DirectMessagesView = ({ openChatId }) => {
 };
 
 
+
 // --- Q&A Tab Component ---
 const QnaView = () => {
     const [questions, setQuestions] = useState([]);
@@ -240,7 +274,6 @@ const QnaView = () => {
     );
 };
 
-// --- Main MessagesView Component ---
 export default function MessagesView({ openChatId }) {
   const [activeTab, setActiveTab] = useState("qna");
 

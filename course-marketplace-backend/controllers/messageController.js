@@ -4,7 +4,7 @@ const Message = require('../models/Message');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 
-// ✅ NEW: Find or create a direct conversation between two users
+// Find or create a direct conversation between two users
 exports.findOrCreateConversation = async (req, res) => {
     const { recipientId } = req.body;
     const senderId = req.user._id;
@@ -12,7 +12,7 @@ exports.findOrCreateConversation = async (req, res) => {
     try {
         let conversation = await Conversation.findOne({
             participants: { $all: [senderId, recipientId] },
-            course: null // Ensure it's a direct message conversation
+            course: null
         });
 
         if (!conversation) {
@@ -22,7 +22,6 @@ exports.findOrCreateConversation = async (req, res) => {
             await conversation.save();
         }
         
-        // Populate participants' details before sending back
         await conversation.populate('participants', 'name profileImage');
         res.status(200).json(conversation);
 
@@ -90,46 +89,8 @@ exports.sendMessage = async (req, res) => {
         await Promise.all([newMessage.save(), conversation.save()]);
         
         await newMessage.populate('sender', 'name profileImage');
-        res.status(201).json(newMessage);
-    } catch (error) {
-        res.status(500).json({ message: "Error sending message." });
-    }
-};
 
-exports.sendMessage = async (req, res) => {
-    try {
-        const { recipientId, text } = req.body;
-        const senderId = req.user._id;
-
-        let conversation = await Conversation.findOne({
-            participants: { $all: [senderId, recipientId] },
-            course: null
-        });
-
-        if (!conversation) {
-            conversation = new Conversation({
-                participants: [senderId, recipientId],
-            });
-        }
-
-        const newMessage = new Message({
-            conversation: conversation._id,
-            sender: senderId,
-            text,
-            readBy: [senderId]
-        });
-        
-        conversation.lastMessage = {
-            text,
-            sender: senderId,
-            timestamp: new Date()
-        };
-
-        await Promise.all([newMessage.save(), conversation.save()]);
-        
-        await newMessage.populate('sender', 'name profileImage');
-
-        // ✅ Real-time logic: Emit the message to the recipient if they are online
+        // Real-time logic: Emit the message to the recipient if they are online
         const recipientSocketId = req.onlineUsers.get(recipientId);
         if (recipientSocketId) {
             req.io.to(recipientSocketId).emit("newMessage", newMessage);

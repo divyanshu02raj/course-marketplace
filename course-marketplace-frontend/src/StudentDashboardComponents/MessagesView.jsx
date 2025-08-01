@@ -25,19 +25,39 @@ export default function MessagesView({ openChatId }) {
         scrollToBottom();
     }, [messages]);
 
+    // ✅ FIX: This is the corrected real-time listener.
+    // It's set up once and uses a ref to avoid stale state issues.
+    const selectedConversationRef = useRef(selectedConversation);
+    useEffect(() => {
+        selectedConversationRef.current = selectedConversation;
+    }, [selectedConversation]);
+
     useEffect(() => {
         if (socket) {
-            socket.on("newMessage", (message) => {
-                if (selectedConversation && message.conversation === selectedConversation._id) {
+            const handleNewMessage = (message) => {
+                const currentConvo = selectedConversationRef.current;
+                if (currentConvo && message.conversation === currentConvo._id) {
                     setMessages(prev => [...prev, message]);
                 }
-            });
+                // Update the last message in the conversation list for a better UX
+                setConversations(prevConvos => {
+                    return prevConvos.map(convo => {
+                        if (convo._id === message.conversation) {
+                            return { ...convo, lastMessage: { text: message.text, timestamp: message.createdAt } };
+                        }
+                        return convo;
+                    });
+                });
+            };
+
+            socket.on("newMessage", handleNewMessage);
 
             return () => {
-                socket.off("newMessage");
+                socket.off("newMessage", handleNewMessage);
             };
         }
-    }, [socket, selectedConversation]);
+    }, [socket]);
+
 
     const selectConversation = useCallback(async (conversation) => {
         if (!conversation || selectedConversation?._id === conversation._id) return;
