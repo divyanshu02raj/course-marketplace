@@ -5,7 +5,7 @@ import { MessageSquare, Send, Plus, ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import { motion, AnimatePresence } from 'framer-motion';
-import NewMessageModal from "./NewMessageModal"; // Assuming modal is in the same folder
+import NewMessageModal from "./NewMessageModal";
 
 // --- Helper function to format timestamps ---
 const formatTimestamp = (timestamp) => {
@@ -169,7 +169,6 @@ const DirectMessagesView = ({ openChatId }) => {
 
     return (
         <div className="flex h-[calc(100vh-16rem)] relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-            {/* Conversation List (Mobile & Desktop) */}
             <aside className={`absolute md:relative inset-0 md:w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-transform duration-300 ease-in-out ${selectedConversation ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}>
                 <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white">Chats</h2>
@@ -194,7 +193,6 @@ const DirectMessagesView = ({ openChatId }) => {
                 </div>
             </aside>
 
-            {/* Message Area (Mobile & Desktop) */}
             <main className={`absolute md:relative inset-0 md:w-2/3 flex flex-col bg-gray-50 dark:bg-gray-800/50 transition-transform duration-300 ease-in-out ${selectedConversation ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
                 <AnimatePresence mode="wait">
                     {selectedConversation ? (
@@ -247,24 +245,40 @@ const DirectMessagesView = ({ openChatId }) => {
 };
 
 // --- Main MessagesView Component (Student) ---
-export default function MessagesView({ openChatId }) {
-  const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
+export default function MessagesView({ openChatId: initialOpenChatId }) {
+    const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
+    const [newlyOpenedChatId, setNewlyOpenedChatId] = useState(null);
 
-  return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-          Direct Messages
-        </h2>
-        <button onClick={() => setIsNewMessageModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition">
-            <Plus size={16}/> New Message
-        </button>
-      </div>
-      
-      <div>
-        <DirectMessagesView openChatId={openChatId} />
-      </div>
-      <NewMessageModal isOpen={isNewMessageModalOpen} onClose={() => setIsNewMessageModalOpen(false)} />
-    </div>
-  );
+    const handleConversationReady = (conversation) => {
+        if (conversation && conversation._id) {
+            setNewlyOpenedChatId(conversation._id);
+        }
+        setIsNewMessageModalOpen(false);
+    };
+
+    // Prioritize the newly created chat ID, otherwise use the one passed from router state
+    const finalOpenChatId = newlyOpenedChatId || initialOpenChatId;
+
+    return (
+        <div className="w-full">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                    Direct Messages
+                </h2>
+                <button onClick={() => setIsNewMessageModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition">
+                    <Plus size={16}/> New Message
+                </button>
+            </div>
+            
+            <div>
+                <DirectMessagesView openChatId={finalOpenChatId} />
+            </div>
+
+            <NewMessageModal 
+                isOpen={isNewMessageModalOpen} 
+                onClose={() => setIsNewMessageModalOpen(false)}
+                onConversationReady={handleConversationReady}
+            />
+        </div>
+    );
 }

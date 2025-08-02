@@ -245,9 +245,9 @@ export default function CourseDetailsPage() {
                 {/* Main Content */}
                 <div className="lg:col-span-2">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-                        <Link to="/dashboard" className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-6 font-semibold">
+                        <Link to="/dashboard/courses" className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-6 font-semibold">
                             <ArrowLeft size={16} />
-                            Back to Dashboard
+                            Back to Courses
                         </Link>
                         <h1 className="text-4xl lg:text-5xl font-bold text-gray-800 dark:text-white mb-3">{course.title}</h1>
                         <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{course.shortDesc}</p>

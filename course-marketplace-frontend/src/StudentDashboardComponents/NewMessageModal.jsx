@@ -1,17 +1,14 @@
-// src/StudentDashboardComponents/NewMessageModal.jsx
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
 import { X, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 
-export default function NewMessageModal({ isOpen, onClose }) {
+export default function NewMessageModal({ isOpen, onClose, onConversationReady }) {
     const [contacts, setContacts] = useState([]);
     const [filteredContacts, setFilteredContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const navigate = useNavigate();
 
     useEffect(() => {
         if (isOpen) {
@@ -38,14 +35,18 @@ export default function NewMessageModal({ isOpen, onClose }) {
         setFilteredContacts(filtered);
     }, [searchQuery, contacts]);
 
-    const handleSelectContact = async (recipientId) => {
+    const handleSelectContact = async (contact) => {
         const toastId = toast.loading("Starting conversation...");
         try {
-            const res = await axios.post('/messages/conversation', { recipientId });
+            const res = await axios.post('/messages/conversation', { recipientId: contact._id });
             toast.dismiss(toastId);
+            
+            // Pass the newly created conversation object back to the parent
+            if (onConversationReady) {
+                onConversationReady(res.data);
+            }
+            
             onClose(); // Close the modal
-            // Navigate to the dashboard, passing the new conversation ID to open it
-            navigate('/dashboard', { state: { openChatId: res.data._id, openMessages: true } });
         } catch (error) {
             toast.error("Could not start conversation.", { id: toastId });
         }
@@ -86,7 +87,7 @@ export default function NewMessageModal({ isOpen, onClose }) {
                         filteredContacts.map(contact => (
                             <button 
                                 key={contact._id} 
-                                onClick={() => handleSelectContact(contact._id)}
+                                onClick={() => handleSelectContact(contact)}
                                 className="w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                             >
                                 <img src={contact.profileImage || `https://i.pravatar.cc/40?u=${contact._id}`} alt={contact.name} className="w-10 h-10 rounded-full"/>

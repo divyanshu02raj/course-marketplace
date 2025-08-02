@@ -169,7 +169,6 @@ const DirectMessagesView = ({ openChatId }) => {
 
     return (
         <div className="flex h-[calc(100vh-16rem)] relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-            {/* Conversation List (Mobile & Desktop) */}
             <aside className={`absolute md:relative inset-0 md:w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-transform duration-300 ease-in-out ${selectedConversation ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}>
                 <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white">Chats</h2>
@@ -194,7 +193,6 @@ const DirectMessagesView = ({ openChatId }) => {
                 </div>
             </aside>
 
-            {/* Message Area (Mobile & Desktop) */}
             <main className={`absolute md:relative inset-0 md:w-2/3 flex flex-col bg-gray-50 dark:bg-gray-800/50 transition-transform duration-300 ease-in-out ${selectedConversation ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
                 <AnimatePresence mode="wait">
                     {selectedConversation ? (
@@ -245,7 +243,6 @@ const DirectMessagesView = ({ openChatId }) => {
         </div>
     );
 };
-
 
 // --- Q&A Tab Component ---
 const QnaView = () => {
@@ -328,48 +325,63 @@ const QnaView = () => {
 };
 
 // --- Main MessagesView Component ---
-export default function MessagesView({ openChatId }) {
-  const [activeTab, setActiveTab] = useState("qna");
-  const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
+export default function MessagesView({ openChatId: initialOpenChatId }) {
+    const [activeTab, setActiveTab] = useState("qna");
+    const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
+    const [newlyOpenedChatId, setNewlyOpenedChatId] = useState(null);
 
-  useEffect(() => {
-    if (openChatId) {
-      setActiveTab('messages');
-    }
-  }, [openChatId]);
+    useEffect(() => {
+        if (initialOpenChatId) {
+            setActiveTab('messages');
+        }
+    }, [initialOpenChatId]);
 
-  return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-          Communication Center
-        </h2>
-        <button onClick={() => setIsNewMessageModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition">
-            <Plus size={16}/> New Direct Message
-        </button>
-      </div>
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-        <nav className="flex gap-6" aria-label="Tabs">
-          <button
-            onClick={() => setActiveTab('qna')}
-            className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'qna' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-          >
-            <HelpCircle size={16} /> Course Q&A
-          </button>
-          <button
-            onClick={() => setActiveTab('messages')}
-            className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'messages' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-          >
-            <MessageSquare size={16} /> Direct Messages
-          </button>
-        </nav>
-      </div>
+    const handleConversationReady = (conversation) => {
+        if (conversation && conversation._id) {
+            setNewlyOpenedChatId(conversation._id);
+            setActiveTab('messages'); // Switch to the messages tab
+        }
+        setIsNewMessageModalOpen(false);
+    };
 
-      <div>
-        {activeTab === 'qna' && <QnaView />}
-        {activeTab === 'messages' && <DirectMessagesView openChatId={openChatId} />}
-      </div>
-      <NewMessageModal isOpen={isNewMessageModalOpen} onClose={() => setIsNewMessageModalOpen(false)} />
-    </div>
-  );
+    const finalOpenChatId = newlyOpenedChatId || initialOpenChatId;
+
+    return (
+        <div className="w-full">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                    Communication Center
+                </h2>
+                <button onClick={() => setIsNewMessageModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition">
+                    <Plus size={16}/> New Direct Message
+                </button>
+            </div>
+            <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+                <nav className="flex gap-6" aria-label="Tabs">
+                    <button
+                        onClick={() => setActiveTab('qna')}
+                        className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'qna' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <HelpCircle size={16} /> Course Q&A
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('messages')}
+                        className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'messages' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <MessageSquare size={16} /> Direct Messages
+                    </button>
+                </nav>
+            </div>
+
+            <div>
+                {activeTab === 'qna' && <QnaView />}
+                {activeTab === 'messages' && <DirectMessagesView openChatId={finalOpenChatId} />}
+            </div>
+            <NewMessageModal 
+                isOpen={isNewMessageModalOpen} 
+                onClose={() => setIsNewMessageModalOpen(false)}
+                onConversationReady={handleConversationReady}
+            />
+        </div>
+    );
 }

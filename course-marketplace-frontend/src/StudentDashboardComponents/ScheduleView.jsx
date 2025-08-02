@@ -1,4 +1,3 @@
-// StudentDashboardComponents/ScheduleView.jsx
 import React from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import CalendarWidget from "react-calendar";
@@ -8,9 +7,9 @@ import "../styles/CustomCalendar.css";
 const ScheduleView = ({
   selectedDate,
   setSelectedDate,
-  sessions,
-  filteredSessions,
-  sessionDates,
+  sessions = [], // Default to an empty array
+  filteredSessions = [], // Default to an empty array
+  sessionDates = [], // Default to an empty array
 }) => {
   return (
     <div>
