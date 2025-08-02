@@ -1,4 +1,3 @@
-// src/InstructorDashboardComponents/EarningsView.jsx
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
@@ -82,9 +81,11 @@ export default function EarningsView() {
                             {earningsData.transactions.map(t => (
                                 <tr key={t._id} className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                        {t.course.title}
+                                        {t.course?.title || <span className="text-gray-400 italic">Course not available</span>}
                                     </th>
-                                    <td className="px-6 py-4">{t.student.name}</td>
+                                    <td className="px-6 py-4">
+                                        {t.student?.name || <span className="text-gray-400 italic">Student not available</span>}
+                                    </td>
                                     <td className="px-6 py-4">{new Date(t.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right font-semibold text-green-600 dark:text-green-400">{formatCurrency(t.amount)}</td>
                                 </tr>

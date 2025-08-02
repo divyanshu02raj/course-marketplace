@@ -7,6 +7,7 @@ const cors = require("cors");
 const http = require('http');
 const { Server } = require("socket.io");
 
+// Load environment variables at the very top
 dotenv.config();
 
 const connectDB = require("./config/db");
@@ -24,10 +25,12 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const earningsRoutes = require("./routes/earningsRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const userRoutes = require("./routes/userRoutes"); // Import the new user routes
 
 const app = express();
 const server = http.createServer(app);
 
+// --- Socket.IO Initialization ---
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 const io = new Server(server, {
   cors: {
@@ -35,20 +38,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-
-// Middlewares
-app.use(cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("CORS not allowed for this origin"));
-      }
-    },
-    credentials: true,
-}));
-app.use(express.json());
-app.use(cookieParser());
 
 // Socket.io connection logic
 let onlineUsers = new Map();
@@ -68,6 +57,20 @@ io.on("connection", (socket) => {
     }
   });
 });
+
+// --- Middleware ---
+app.use(cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("CORS not allowed for this origin"));
+      }
+    },
+    credentials: true,
+}));
+app.use(express.json());
+app.use(cookieParser());
 
 // Middleware to make io instance available to controllers
 app.use((req, res, next) => {
@@ -89,24 +92,23 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/earnings", earningsRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/users", userRoutes); // Use the new user routes
 
-// 404 Not Found Handler
+// --- Error Handlers ---
 app.use((req, res) => {
   res.status(404).json({ message: "API Route not found" });
 });
 
-// Centralized Error Handler
 app.use((err, req, res, next) => {
   console.error("Server error:", err.stack);
   res.status(500).json({ message: "Internal server error" });
 });
 
-// MongoDB + Server Init
+// --- Server Initialization ---
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {
     try {
         await connectDB();
-        // ✅ FIX: Use server.listen() to start the server with WebSocket support
         server.listen(PORT, () => {
             console.log(`✅ Server running on http://localhost:${PORT}`);
         });
