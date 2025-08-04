@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom"; // Import Link
+import { useParams, Link } from "react-router-dom";
 import axios from "../api/axios";
 import toast from "react-hot-toast";
 import {
   ArrowLeft, BookText, ListVideo, Type, Tag, FileText,
-  DollarSign, Sun, Moon, Plus, Trash2
+  DollarSign, Sun, Moon, Plus, Trash2, ClipboardCheck
 } from "lucide-react";
 import LessonManager from "./LessonManager";
+import AssessmentManager from "./AssessmentManager"; // Import the new component
 import { useAuth } from "../context/AuthContext";
 import useTheme from "../hooks/useTheme";
 
@@ -149,7 +150,8 @@ export default function EditCourseView() {
           <nav className="flex gap-6" aria-label="Tabs">
             {[
               { key: 'details', label: 'Course Details', icon: BookText },
-              { key: 'lessons', label: 'Lessons & Curriculum', icon: ListVideo }
+              { key: 'lessons', label: 'Lessons & Curriculum', icon: ListVideo },
+              { key: 'assessment', label: 'Final Assessment', icon: ClipboardCheck } // New Tab
             ].map(tab => (
               <button
                 key={tab.key}
@@ -255,6 +257,13 @@ export default function EditCourseView() {
           <div>
             <LessonManager courseId={courseId} />
           </div>
+        )}
+
+        {/* Render the new AssessmentManager when the tab is active */}
+        {activeTab === 'assessment' && (
+            <div>
+                <AssessmentManager courseId={courseId} />
+            </div>
         )}
       </div>
     </div>

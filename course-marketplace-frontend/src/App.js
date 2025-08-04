@@ -16,6 +16,7 @@ const CourseDetailsPage = lazy(() => import('./StudentDashboardComponents/Course
 const EditCourseView = lazy(() => import('./InstructorDashboardComponents/EditCourseView'));
 const ManageCourseView = lazy(() => import('./InstructorDashboardComponents/ManageCourseView'));
 const CertificatePage = lazy(() => import('./StudentDashboardComponents/CertificatePage'));
+const TakeAssessmentView = lazy(() => import('./StudentDashboardComponents/TakeAssessmentView'));
 
 // --- Fallback Loader ---
 const FullPageLoader = () => (
@@ -49,6 +50,7 @@ function App() {
               <Route path="/course/:courseId" element={<CourseDetailsPage />} />
               <Route path="/learn/:courseId" element={<CoursePlayer />} />
               <Route path="/certificate/:certificateId" element={<CertificatePage />} />
+               <Route path="/assessment/:assessmentId" element={<TakeAssessmentView />} />
             </Route>
             
             {/* Protected Routes for Instructors Only */}
