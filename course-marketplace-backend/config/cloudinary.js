@@ -1,23 +1,24 @@
-// config/cloudinary.js
 const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
+require('dotenv').config();
 
-/**
- * Configures the Cloudinary SDK with credentials from environment variables.
- * This should be called once when the server starts.
- */
-const configureCloudinary = () => {
-  try {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-      secure: true, // Recommended to ensure https URLs
-    });
-    console.log("✅ Cloudinary configured successfully.");
-  } catch (error) {
-    console.error("❌ Cloudinary configuration failed:", error);
-    process.exit(1); // Exit if configuration fails, as it's a critical service
+// By calling config() without arguments, the Cloudinary SDK will
+// automatically find and use the CLOUDINARY_URL from your .env file.
+cloudinary.config();
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'course_assessments',
+    allowed_formats: ['jpg', 'jpeg', 'png','webp', 'mp4', 'gif', 'mov', 'avi'],
+    resource_type: 'auto',
   }
-};
+});
 
-module.exports = configureCloudinary;
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 1024 * 1024 * 100 } // 100MB file size limit
+});
+
+module.exports = upload;

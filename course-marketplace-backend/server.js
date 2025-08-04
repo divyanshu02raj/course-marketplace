@@ -25,6 +25,7 @@ const earningsRoutes = require("./routes/earningsRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const userRoutes = require("./routes/userRoutes");
+const assessmentRoutes = require("./routes/assessmentRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -99,6 +100,7 @@ app.use("/api/earnings", earningsRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/assessments", assessmentRoutes);
 
 // --- Error Handlers ---
 app.use((req, res) => {
