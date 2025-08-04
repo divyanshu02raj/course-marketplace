@@ -1,4 +1,3 @@
-// course-marketplace-backend/server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
@@ -25,7 +24,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const earningsRoutes = require("./routes/earningsRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const messageRoutes = require("./routes/messageRoutes");
-const userRoutes = require("./routes/userRoutes"); // Import the new user routes
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -39,14 +38,28 @@ const io = new Server(server, {
   },
 });
 
-// Socket.io connection logic
+// ** THIS IS THE KEY CHANGE **
+// Make the `io` instance available to all route handlers via app.set()
+// This is a more robust method than using middleware for this purpose.
+app.set('socketio', io);
+
+// --- Socket.io connection logic ---
 let onlineUsers = new Map();
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
+
   socket.on("addUser", (userId) => {
     onlineUsers.set(userId, socket.id);
     console.log(`User ${userId} is online.`);
   });
+
+  // ** ADDED THIS EVENT LISTENER **
+  // This allows the frontend to subscribe a user to a specific conversation room.
+  socket.on("joinConversation", ({ conversationId }) => {
+    socket.join(conversationId);
+    console.log(`Socket ${socket.id} joined room ${conversationId}`);
+  });
+
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
     for (let [userId, socketId] of onlineUsers.entries()) {
@@ -72,13 +85,6 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Middleware to make io instance available to controllers
-app.use((req, res, next) => {
-  req.io = io;
-  req.onlineUsers = onlineUsers;
-  next();
-});
-
 // --- API Routes ---
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
@@ -92,7 +98,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/earnings", earningsRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/messages", messageRoutes);
-app.use("/api/users", userRoutes); // Use the new user routes
+app.use("/api/users", userRoutes);
 
 // --- Error Handlers ---
 app.use((req, res) => {

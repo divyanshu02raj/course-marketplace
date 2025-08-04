@@ -7,6 +7,34 @@ import { useSocket } from "../context/SocketContext";
 import { motion, AnimatePresence } from 'framer-motion';
 import NewMessageModal from "./NewMessageModal";
 
+// --- Skeleton Loader Component ---
+const DirectMessagesSkeleton = () => (
+    <div className="flex h-[calc(100vh-16rem)] relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden animate-pulse">
+        <aside className="w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/3"></div>
+            </div>
+            <div className="overflow-y-auto flex-grow p-2 space-y-2">
+                {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-start gap-3 p-2">
+                        <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700 shrink-0"></div>
+                        <div className="flex-grow space-y-2">
+                            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                            <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </aside>
+        <main className="w-2/3 flex-col hidden md:flex items-center justify-center text-gray-400">
+             <div className="w-12 h-12 bg-gray-300 dark:bg-gray-700 rounded-full mb-4"></div>
+             <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+             <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4"></div>
+        </main>
+    </div>
+);
+
+
 // --- Helper function to format timestamps ---
 const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
@@ -35,6 +63,11 @@ const DirectMessagesView = ({ openChatId }) => {
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
+    const selectedConversationRef = useRef(selectedConversation);
+    useEffect(() => {
+        selectedConversationRef.current = selectedConversation;
+    }, [selectedConversation]);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -43,44 +76,54 @@ const DirectMessagesView = ({ openChatId }) => {
         scrollToBottom();
     }, [messages]);
 
-    const selectedConversationRef = useRef(selectedConversation);
+    // Add user to socket session on connect
     useEffect(() => {
-        selectedConversationRef.current = selectedConversation;
-    }, [selectedConversation]);
+        if (socket && user?._id) {
+            socket.emit('addUser', user._id);
+        }
+    }, [socket, user]);
 
+    // Set up socket event listeners
     useEffect(() => {
-        if (socket) {
-            const handleNewMessage = (message) => {
-                const currentConvo = selectedConversationRef.current;
-                if (currentConvo && message.conversation === currentConvo._id) {
+        if (!socket) return;
+
+        const handleNewMessage = (message) => {
+            setConversations(prevConvos => {
+                const updatedList = prevConvos.map(convo => {
+                    if (convo._id === message.conversation) {
+                        return { ...convo, lastMessage: { text: message.text, timestamp: message.createdAt } };
+                    }
+                    return convo;
+                });
+                return updatedList.sort((a, b) => new Date(b.lastMessage?.timestamp) - new Date(a.lastMessage?.timestamp));
+            });
+            
+            // ** THE FIX IS HERE **
+            if (message.sender?._id !== user._id) {
+                if (selectedConversationRef.current?._id === message.conversation) {
                     setMessages(prev => [...prev, message]);
                 }
-                setConversations(prevConvos => {
-                    const updatedConvos = prevConvos.map(convo => {
-                        if (convo._id === message.conversation) {
-                            return { ...convo, lastMessage: { text: message.text, timestamp: message.createdAt } };
-                        }
-                        return convo;
-                    }).sort((a, b) => new Date(b.lastMessage?.timestamp) - new Date(a.lastMessage?.timestamp));
-                    return updatedConvos;
-                });
-            };
+            }
+        };
 
-            socket.on("newMessage", handleNewMessage);
-            socket.on('typing', ({ conversationId }) => {
-                if (selectedConversationRef.current?._id === conversationId) setIsTyping(true);
-            });
-            socket.on('stopTyping', ({ conversationId }) => {
-                if (selectedConversationRef.current?._id === conversationId) setIsTyping(false);
-            });
+        const handleTypingEvent = ({ conversationId }) => {
+            if (selectedConversationRef.current?._id === conversationId) setIsTyping(true);
+        };
 
-            return () => {
-                socket.off("newMessage", handleNewMessage);
-                socket.off("typing");
-                socket.off("stopTyping");
-            };
-        }
-    }, [socket]);
+        const handleStopTypingEvent = ({ conversationId }) => {
+            if (selectedConversationRef.current?._id === conversationId) setIsTyping(false);
+        };
+
+        socket.on("newMessage", handleNewMessage);
+        socket.on("typing", handleTypingEvent);
+        socket.on("stopTyping", handleStopTypingEvent);
+
+        return () => {
+            socket.off("newMessage", handleNewMessage);
+            socket.off("typing", handleTypingEvent);
+            socket.off("stopTyping", handleStopTypingEvent);
+        };
+    }, [socket, user?._id]);
 
     const selectConversation = useCallback(async (conversation) => {
         if (!conversation) {
@@ -88,7 +131,6 @@ const DirectMessagesView = ({ openChatId }) => {
             setMessages([]);
             return;
         }
-        
         if (selectedConversation?._id === conversation._id) return;
         
         setSelectedConversation(conversation);
@@ -109,6 +151,12 @@ const DirectMessagesView = ({ openChatId }) => {
                 const convos = res.data;
                 setConversations(convos);
 
+                if (socket && convos.length > 0) {
+                    convos.forEach(convo => {
+                        socket.emit('joinConversation', { conversationId: convo._id });
+                    });
+                }
+
                 if (openChatId) {
                     const targetConvo = convos.find(c => c._id === openChatId);
                     if (targetConvo) {
@@ -122,11 +170,11 @@ const DirectMessagesView = ({ openChatId }) => {
             }
         };
         fetchConversationsAndSelect();
-    }, [openChatId, selectConversation]);
+    }, [openChatId, selectConversation, socket]);
 
     const handleTyping = () => {
         if (!socket || !selectedConversation) return;
-        const recipient = selectedConversation.participants.find(p => p._id !== user.id);
+        const recipient = selectedConversation.participants.find(p => p._id !== user._id);
         socket.emit('startTyping', { conversationId: selectedConversation._id, recipientId: recipient._id });
         
         clearTimeout(typingTimeoutRef.current);
@@ -139,7 +187,7 @@ const DirectMessagesView = ({ openChatId }) => {
         e.preventDefault();
         if (!newMessage.trim() || !selectedConversation) return;
 
-        const recipient = selectedConversation.participants.find(p => p._id !== user.id);
+        const recipient = selectedConversation.participants.find(p => p._id !== user._id);
         if (!recipient) return toast.error("Recipient not found.");
         
         if(socket) socket.emit('stopTyping', { conversationId: selectedConversation._id, recipientId: recipient._id });
@@ -147,7 +195,7 @@ const DirectMessagesView = ({ openChatId }) => {
         const tempMessageId = Date.now();
         const sentMessage = { 
             _id: tempMessageId, 
-            sender: { _id: user.id, name: user.name, profileImage: user.profileImage }, 
+            sender: { _id: user._id, name: user.name, profileImage: user.profileImage }, 
             text: newMessage, 
             createdAt: new Date().toISOString() 
         };
@@ -164,7 +212,7 @@ const DirectMessagesView = ({ openChatId }) => {
     };
     
     if (loading) {
-        return <div className="text-center p-8 text-gray-500 dark:text-gray-400">Loading messages...</div>;
+        return <DirectMessagesSkeleton />;
     }
 
     return (
@@ -175,7 +223,7 @@ const DirectMessagesView = ({ openChatId }) => {
                 </div>
                 <div className="overflow-y-auto flex-grow">
                     {conversations.map(convo => {
-                        const otherParticipant = convo.participants.find(p => p._id !== user.id);
+                        const otherParticipant = convo.participants.find(p => p._id !== user._id);
                         if (!otherParticipant) return null;
                         return (
                             <button key={convo._id} onClick={() => selectConversation(convo)} className={`w-full text-left p-4 flex items-start gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${selectedConversation?._id === convo._id ? 'bg-indigo-50 dark:bg-indigo-900/50' : ''}`}>
@@ -201,21 +249,34 @@ const DirectMessagesView = ({ openChatId }) => {
                                 <button onClick={() => selectConversation(null)} className="md:hidden p-2 -ml-2 text-gray-500 hover:text-gray-800 dark:hover:text-white">
                                     <ArrowLeft size={20} />
                                 </button>
-                                <img src={selectedConversation.participants.find(p => p._id !== user.id)?.profileImage || `https://i.pravatar.cc/40?u=${selectedConversation.participants.find(p => p._id !== user.id)?._id}`} alt="avatar" className="w-10 h-10 rounded-full"/>
+                                <img src={selectedConversation.participants.find(p => p._id !== user._id)?.profileImage || `https://i.pravatar.cc/40?u=${selectedConversation.participants.find(p => p._id !== user._id)?._id}`} alt="avatar" className="w-10 h-10 rounded-full"/>
                                 <div>
-                                    <h3 className="font-bold text-gray-800 dark:text-white">{selectedConversation.participants.find(p => p._id !== user.id)?.name}</h3>
+                                    <h3 className="font-bold text-gray-800 dark:text-white">{selectedConversation.participants.find(p => p._id !== user._id)?.name}</h3>
                                     {isTyping && <p className="text-xs text-indigo-500 animate-pulse">Typing...</p>}
                                 </div>
                             </div>
                             <div className="flex-grow overflow-y-auto p-6 space-y-4">
-                                {messages.map(msg => (
-                                    <div key={msg._id} className={`flex items-end gap-2 ${msg.sender?._id === user.id ? 'justify-end' : 'justify-start'}`}>
-                                        {msg.sender?._id !== user.id && <img src={msg.sender.profileImage || `https://i.pravatar.cc/40?u=${msg.sender._id}`} alt="sender" className="w-8 h-8 rounded-full"/>}
-                                        <div className={`max-w-xs lg:max-w-md p-3 rounded-2xl ${msg.sender?._id === user.id ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none shadow-sm'}`}>
-                                            <p>{msg.text}</p>
+                                {messages.map(msg => {
+                                    const senderId = typeof msg.sender === 'object' && msg.sender !== null ? msg.sender._id : msg.sender;
+                                    const isMyMessage = senderId === user._id;
+                                    
+                                    const otherParticipant = selectedConversation.participants.find(p => p._id !== user._id);
+
+                                    return (
+                                        <div key={msg._id} className={`flex items-end gap-2 ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
+                                            {!isMyMessage && otherParticipant && (
+                                                <img 
+                                                    src={otherParticipant.profileImage || `https://i.pravatar.cc/40?u=${otherParticipant._id}`} 
+                                                    alt={otherParticipant.name}
+                                                    className="w-8 h-8 rounded-full"
+                                                />
+                                            )}
+                                            <div className={`max-w-xs lg:max-w-md p-3 rounded-2xl ${isMyMessage ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none shadow-sm'}`}>
+                                                <p>{msg.text}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 <div ref={messagesEndRef} />
                             </div>
                             <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 bg-white dark:bg-gray-900">
@@ -248,15 +309,18 @@ const DirectMessagesView = ({ openChatId }) => {
 export default function MessagesView({ openChatId: initialOpenChatId }) {
     const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
     const [newlyOpenedChatId, setNewlyOpenedChatId] = useState(null);
+    const socket = useSocket();
 
     const handleConversationReady = (conversation) => {
         if (conversation && conversation._id) {
+            if (socket) {
+                socket.emit('joinConversation', { conversationId: conversation._id });
+            }
             setNewlyOpenedChatId(conversation._id);
         }
         setIsNewMessageModalOpen(false);
     };
 
-    // Prioritize the newly created chat ID, otherwise use the one passed from router state
     const finalOpenChatId = newlyOpenedChatId || initialOpenChatId;
 
     return (

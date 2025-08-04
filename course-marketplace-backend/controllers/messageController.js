@@ -1,4 +1,3 @@
-// controllers/messageController.js
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const Course = require('../models/Course');
@@ -12,7 +11,7 @@ exports.findOrCreateConversation = async (req, res) => {
     try {
         let conversation = await Conversation.findOne({
             participants: { $all: [senderId, recipientId] },
-            course: null
+            course: null // Ensure it's a direct message, not a course broadcast
         });
 
         if (!conversation) {
@@ -26,6 +25,7 @@ exports.findOrCreateConversation = async (req, res) => {
         res.status(200).json(conversation);
 
     } catch (error) {
+        console.error("Error in findOrCreateConversation:", error);
         res.status(500).json({ message: "Error finding or creating conversation." });
     }
 };
@@ -39,6 +39,7 @@ exports.getConversations = async (req, res) => {
             .sort({ 'lastMessage.timestamp': -1 });
         res.json(conversations);
     } catch (error) {
+        console.error("Error in getConversations:", error);
         res.status(500).json({ message: "Error fetching conversations." });
     }
 };
@@ -52,6 +53,7 @@ exports.getMessagesForConversation = async (req, res) => {
             .sort({ createdAt: 'asc' });
         res.json(messages);
     } catch (error) {
+        console.error("Error in getMessagesForConversation:", error);
         res.status(500).json({ message: "Error fetching messages." });
     }
 };
@@ -62,17 +64,19 @@ exports.sendMessage = async (req, res) => {
         const { recipientId, text } = req.body;
         const senderId = req.user._id;
 
-        let conversation = await Conversation.findOne({
-            participants: { $all: [senderId, recipientId] },
-            course: null
-        });
+        // 1. Find or create the conversation
+        let conversation = await Conversation.findOneAndUpdate(
+            {
+                participants: { $all: [senderId, recipientId] },
+                course: null
+            },
+            { 
+                $set: { participants: [senderId, recipientId] }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
 
-        if (!conversation) {
-            conversation = new Conversation({
-                participants: [senderId, recipientId],
-            });
-        }
-
+        // 2. Create the new message
         const newMessage = new Message({
             conversation: conversation._id,
             sender: senderId,
@@ -80,24 +84,28 @@ exports.sendMessage = async (req, res) => {
             readBy: [senderId]
         });
         
+        // 3. Update the conversation's last message
         conversation.lastMessage = {
             text,
             sender: senderId,
             timestamp: new Date()
         };
 
+        // 4. Save both the new message and the updated conversation
         await Promise.all([newMessage.save(), conversation.save()]);
         
-        await newMessage.populate('sender', 'name profileImage');
+        // 5. Populate the sender's details for the frontend
+        const populatedMessage = await newMessage.populate('sender', 'name profileImage');
 
-        // Real-time logic: Emit the message to the recipient if they are online
-        const recipientSocketId = req.onlineUsers.get(recipientId);
-        if (recipientSocketId) {
-            req.io.to(recipientSocketId).emit("newMessage", newMessage);
-        }
+        // ** THIS IS THE CRITICAL FIX **
+        // 6. Get the io instance and emit the message to the conversation room
+        const io = req.app.get('socketio');
+        io.to(conversation._id.toString()).emit("newMessage", populatedMessage);
+        // -----------------------------
 
-        res.status(201).json(newMessage);
+        res.status(201).json(populatedMessage);
     } catch (error) {
+        console.error("Error in sendMessage:", error);
         res.status(500).json({ message: "Error sending message." });
     }
 };
@@ -134,9 +142,16 @@ exports.sendBroadcastMessage = async (req, res) => {
         conversation.lastMessage = { text, sender: instructorId, timestamp: new Date() };
 
         await Promise.all([newMessage.save(), conversation.save()]);
+        
+        const populatedMessage = await newMessage.populate('sender', 'name profileImage');
+
+        // Emit broadcast to the new conversation room
+        const io = req.app.get('socketio');
+        io.to(conversation._id.toString()).emit("newMessage", populatedMessage);
 
         res.status(201).json({ message: "Broadcast message sent successfully." });
     } catch (error) {
+        console.error("Error in sendBroadcastMessage:", error);
         res.status(500).json({ message: "Error sending broadcast message." });
     }
 };
