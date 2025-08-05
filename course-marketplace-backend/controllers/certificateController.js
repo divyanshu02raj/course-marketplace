@@ -65,12 +65,13 @@ exports.verifyCertificate = async (req, res) => {
             return res.status(404).json({ message: 'Certificate not found or invalid.' });
         }
 
-        // Return all necessary public information
+        // Return all necessary public information to render the certificate
         res.json({
             studentName: certificate.user.name,
             courseTitle: certificate.course.title,
             instructorName: certificate.course.instructor.name,
             issueDate: certificate.issueDate,
+            certificateId: certificate.certificateId,
             isValid: true
         });
     } catch (error) {
