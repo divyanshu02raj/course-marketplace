@@ -11,6 +11,7 @@
     "@testing-library/user-event": "^13.5.0",
     "framer-motion": "^12.17.3",
     "lucide-react": "^0.513.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.1.0",
     "react-calendar": "^6.0.0",
     "react-dom": "^19.1.0",

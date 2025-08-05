@@ -1,5 +1,6 @@
 // course-marketplace-backend\controllers\courseController.js
 const Course = require("../models/Course");
+const Enrollment = require("../models/Enrollment"); 
 const Assessment = require("../models/Assessment");
 const Certificate = require("../models/Certificate");
 const AssessmentAttempt = require("../models/AssessmentAttempt");
@@ -23,11 +24,30 @@ const getAllPublishedCourses = async (req, res) => {
 const getEnrolledCourses = async (req, res) => {
     try {
         const userId = req.user._id;
-        const courses = await Course.find({ enrolledStudents: userId })
-            .populate("instructor", "name")
+
+        // 1. Find all enrollments for the user and populate the course details
+        const enrollments = await Enrollment.find({ user: userId })
+            .populate({
+                path: 'course',
+                populate: {
+                    path: 'instructor',
+                    select: 'name'
+                }
+            })
             .sort({ createdAt: -1 });
-        res.json(courses);
+
+        // 2. Map the results to a cleaner format that includes the progress
+        const coursesWithProgress = enrollments.map(enrollment => {
+            if (!enrollment.course) return null; // Handle cases where a course might have been deleted
+            
+            const courseObject = enrollment.course.toObject(); // Convert Mongoose doc to a plain object
+            courseObject.progress = enrollment.progress || 0; // Attach the progress
+            return courseObject;
+        }).filter(course => course !== null); // Filter out any null courses
+
+        res.json(coursesWithProgress);
     } catch (err) {
+        console.error("Get Enrolled Courses Error:", err);
         res.status(500).json({ message: "Server error: " + err.message });
     }
 };
@@ -51,8 +71,15 @@ const enrollInCourse = async (req, res) => {
       return res.status(400).json({ message: "You are already enrolled in this course" });
     }
 
+    // Also create an enrollment document
+    const enrollment = new Enrollment({
+        user: userId,
+        course: courseId,
+    });
+    
     course.enrolledStudents.push(userId);
-    await course.save();
+    
+    await Promise.all([course.save(), enrollment.save()]);
 
     res.status(200).json({ message: "Successfully enrolled in the course" });
   } catch (err) {
@@ -93,44 +120,39 @@ const getMyCourses = async (req, res) => {
 
 // Get a course by ID
 const getCourseById = async (req, res) => {
-  try {
-    const course = await Course.findById(req.params.id)
-        .populate("instructor", "name email")
-        .lean(); // Use lean for better performance and to allow modification
+    try {
+        const course = await Course.findById(req.params.id)
+            .populate("instructor", "name email")
+            .lean();
 
-    if (!course) return res.status(404).json({ message: "Course not found" });
+        if (!course) return res.status(404).json({ message: "Course not found" });
 
-    // ** THE FIX IS HERE **
-    // Now, we check for an assessment and certificate for this course
-    const studentId = req.user._id;
+        const studentId = req.user._id;
+        const assessment = await Assessment.findOne({ course: course._id }).lean();
+        
+        if (assessment) {
+            course.assessmentId = assessment._id;
+            const passedAttempt = await AssessmentAttempt.findOne({
+                assessment: assessment._id,
+                student: studentId,
+                passed: true
+            });
 
-    const assessment = await Assessment.findOne({ course: course._id }).lean();
-    
-    if (assessment) {
-        course.assessmentId = assessment._id;
-
-        // Check if the student has already passed this assessment
-        const passedAttempt = await AssessmentAttempt.findOne({
-            assessment: assessment._id,
-            student: studentId,
-            passed: true
-        });
-
-        if (passedAttempt) {
-            const certificate = await Certificate.findOne({
-                course: course._id,
-                user: studentId
-            }).lean();
-            if (certificate) {
-                course.certificateId = certificate.certificateId;
+            if (passedAttempt) {
+                const certificate = await Certificate.findOne({
+                    course: course._id,
+                    user: studentId
+                }).lean();
+                if (certificate) {
+                    course.certificateId = certificate.certificateId;
+                }
             }
         }
-    }
 
-    res.json(course);
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching course: " + err.message });
-  }
+        res.json(course);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching course: " + err.message });
+    }
 };
 
 // Update a course by ID

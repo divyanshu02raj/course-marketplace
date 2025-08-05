@@ -1,13 +1,18 @@
-// routes/certificateRoutes.js
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
-const { getMyCertificates, getCertificateById } = require("../controllers/certificateController");
+const { 
+    getMyCertificates, 
+    getCertificateById,
+    verifyCertificate // This was the missing import
+} = require("../controllers/certificateController");
 
-// GET /api/certificates/my - Get all certificates for the logged-in user
+// --- PROTECTED ROUTES (for logged-in users) ---
 router.get("/my", protect, getMyCertificates);
-
-// ✅ NEW: GET /api/certificates/:certificateId - Get a single certificate by its ID
 router.get("/:certificateId", protect, getCertificateById);
+
+// --- PUBLIC ROUTE ---
+// GET /api/certificates/verify/:certificateId - Verify a certificate's authenticity
+router.get("/verify/:certificateId", verifyCertificate);
 
 module.exports = router;
