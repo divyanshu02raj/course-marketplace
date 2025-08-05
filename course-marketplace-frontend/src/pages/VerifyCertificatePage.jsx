@@ -27,19 +27,12 @@ export default function VerifyCertificatePage() {
 
     useEffect(() => {
         const verify = async () => {
-            // ** THE FIX IS HERE **
-            // The code now relies exclusively on the REACT_APP_API_URL environment variable.
-            // Ensure this is set correctly in your frontend's hosting environment (e.g., Vercel, Netlify).
-            const baseApiUrl = process.env.REACT_APP_API_URL;
-
-            if (!baseApiUrl) {
-                console.error("CRITICAL: REACT_APP_API_URL is not defined. The application cannot connect to the backend.");
-                setError("Application is not configured correctly. Please contact support.");
-                setLoading(false);
-                return;
-            }
-
             try {
+                // ** THE FIX IS HERE **
+                // Re-added the localhost fallback. This allows the code to work both
+                // locally (where the env var is undefined) and when deployed (where it is defined).
+                const baseApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+                
                 const apiUrl = `${baseApiUrl}/api/certificates/verify/${certificateId}`;
                 const res = await axios.get(apiUrl);
                 setVerificationData(res.data);
