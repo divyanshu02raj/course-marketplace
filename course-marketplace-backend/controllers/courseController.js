@@ -1,3 +1,4 @@
+// course-marketplace-backend\controllers\courseController.js
 const Course = require("../models/Course");
 const Assessment = require("../models/Assessment");
 const Certificate = require("../models/Certificate");
