@@ -26,6 +26,8 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const userRoutes = require("./routes/userRoutes");
 const assessmentRoutes = require("./routes/assessmentRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+
 
 const app = express();
 const server = http.createServer(app);
@@ -101,6 +103,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/assessments", assessmentRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // --- Error Handlers ---
 app.use((req, res) => {

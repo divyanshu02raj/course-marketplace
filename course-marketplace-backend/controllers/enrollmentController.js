@@ -1,22 +1,17 @@
-// controllers/enrollmentController.js
 const Enrollment = require('../models/Enrollment');
 const Lesson = require('../models/Lesson');
 const Course = require('../models/Course');
-const Certificate = require('../models/Certificate'); // 1. Import the Certificate model
-const { v4: uuidv4 } = require('uuid'); // 2. Import the uuid library
+const Certificate = require('../models/Certificate');
 
 // Get a user's progress for a specific course
 exports.getEnrollmentProgress = async (req, res) => {
     try {
         const { courseId } = req.params;
         const userId = req.user._id;
-
         const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
-
         if (!enrollment) {
             return res.json({ completedLessons: [] });
         }
-
         res.json({ completedLessons: enrollment.completedLessons });
     } catch (error) {
         res.status(500).json({ message: "Error fetching progress." });
@@ -46,19 +41,9 @@ exports.markLessonAsComplete = async (req, res) => {
 
         await enrollment.save();
 
-        // ✅ 3. This logic is now corrected and will work as expected
-        if (enrollment.progress >= 100) {
-            const existingCertificate = await Certificate.findOne({ user: userId, course: courseId });
-            if (!existingCertificate) {
-                const newCertificate = new Certificate({
-                    user: userId,
-                    course: courseId,
-                    certificateId: uuidv4(), // Generate a unique ID
-                });
-                await newCertificate.save();
-                // Optional: Notify user they've earned a certificate
-            }
-        }
+        // ** THE FIX IS HERE **
+        // The old logic that automatically created a certificate has been removed.
+        // This is now correctly handled in the assessmentController after a student passes.
 
         res.status(200).json({ message: "Lesson marked as complete.", completedLessons: enrollment.completedLessons });
 

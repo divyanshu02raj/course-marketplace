@@ -3,62 +3,40 @@ const AssessmentQuestion = require('../models/AssessmentQuestion');
 const AssessmentAttempt = require('../models/AssessmentAttempt');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
-const Certificate = require('../models/Certificate'); // Ensure Certificate model is imported
+const Certificate = require('../models/Certificate');
+const Lesson = require('../models/Lesson');
 const mongoose = require('mongoose');
 
-// --- INSTRUCTOR-FACING FUNCTIONS ---
+// --- INSTRUCTOR FUNCTIONS ---
+// (No changes needed for instructor functions)
 exports.uploadMedia = (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded.' });
-    }
-    res.status(201).json({
-        mediaType: req.file.mimetype.startsWith('image') ? 'image' : 'video',
-        url: req.file.path
-    });
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
+    res.status(201).json({ mediaType: req.file.mimetype.startsWith('image') ? 'image' : 'video', url: req.file.path });
 };
-
 exports.getOrCreateAssessmentForCourse = async (req, res) => {
     try {
         const { courseId } = req.params;
-        const instructorId = req.user._id;
-        const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-        if (!course) {
-            return res.status(403).json({ message: "You are not authorized to manage this course." });
-        }
+        const course = await Course.findOne({ _id: courseId, instructor: req.user._id });
+        if (!course) return res.status(403).json({ message: "Unauthorized." });
         let assessment = await Assessment.findOne({ course: courseId }).populate('questions');
         if (!assessment) {
-            assessment = new Assessment({
-                course: courseId,
-                title: `${course.title} - Final Assessment`,
-            });
+            assessment = new Assessment({ course: courseId, title: `${course.title} - Final Assessment` });
             await assessment.save();
         }
         res.json(assessment);
-    } catch (error) {
-        console.error("Get/Create Assessment Error:", error);
-        res.status(500).json({ message: "Server error while handling assessment." });
-    }
+    } catch (error) { res.status(500).json({ message: "Server error." }); }
 };
-
 exports.addQuestionToAssessment = async (req, res) => {
     try {
         const { assessmentId } = req.params;
-        const { text, media, questionType, options, correctAnswer } = req.body;
         const assessment = await Assessment.findById(assessmentId).populate('course');
-        if (!assessment || assessment.course.instructor.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Unauthorized." });
-        }
-        const newQuestion = new AssessmentQuestion({
-            assessment: assessmentId, text, media, questionType, options, correctAnswer,
-        });
+        if (!assessment || assessment.course.instructor.toString() !== req.user._id.toString()) return res.status(403).json({ message: "Unauthorized." });
+        const newQuestion = new AssessmentQuestion({ assessment: assessmentId, ...req.body });
         await newQuestion.save();
         assessment.questions.push(newQuestion._id);
         await assessment.save();
         res.status(201).json(newQuestion);
-    } catch (error) {
-        console.error("Add Question Error:", error);
-        res.status(500).json({ message: "Error adding question." });
-    }
+    } catch (error) { res.status(500).json({ message: "Error adding question." }); }
 };
 
 exports.updateQuestion = async (req, res) => {
@@ -170,27 +148,37 @@ exports.submitAssessment = async (req, res) => {
 exports.getAssessmentsForStudentDashboard = async (req, res) => {
     try {
         const studentId = req.user._id;
-        const enrollments = await Enrollment.find({ user: studentId }).select('course');
+        const enrollments = await Enrollment.find({ user: studentId }).select('course progress').lean();
         const courseIds = enrollments.map(e => e.course);
+
         const assessments = await Assessment.find({ course: { $in: courseIds } })
             .populate('course', 'title thumbnail')
             .lean();
+        
         const attempts = await AssessmentAttempt.find({ student: studentId }).lean();
         const certificates = await Certificate.find({ user: studentId, course: { $in: courseIds } }).lean();
 
         const assessmentsWithStatus = assessments.map(assessment => {
-            let attempt = attempts.find(a => a.assessment.toString() === assessment._id.toString());
-            let status = "Not Started";
+            const enrollment = enrollments.find(e => e.course.toString() === assessment.course._id.toString());
+            const attempt = attempts.find(a => a.assessment.toString() === assessment._id.toString());
+            
+            let status = "Locked"; // Default status
 
-            if (attempt) {
-                status = attempt.passed ? "Completed" : "Failed";
-                if (attempt.passed) {
-                    const certificate = certificates.find(c => c.course.toString() === assessment.course._id.toString());
-                    if (certificate) {
-                        attempt.certificateId = certificate.certificateId;
-                    }
+            if (enrollment && enrollment.progress === 100) {
+                status = "Not Started"; // Unlock if progress is 100%
+                if (attempt) {
+                    status = attempt.passed ? "Completed" : "Failed";
                 }
             }
+            
+            if (status === "Completed") {
+                const certificate = certificates.find(c => c.course.toString() === assessment.course._id.toString());
+                if (certificate) {
+                    // Attach certificateId to the attempt object for the frontend
+                    if (attempt) attempt.certificateId = certificate.certificateId;
+                }
+            }
+            
             return { ...assessment, status, attempt };
         });
 

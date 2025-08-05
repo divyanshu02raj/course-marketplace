@@ -1,14 +1,13 @@
-// src/pages/CoursePlayer.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { PlayCircle, CheckCircle, ArrowLeft, ChevronRight, Sparkles, BookOpen, MessageSquare, Paperclip, Edit, Download, Users, Clock, Send, Save, Play, Pause, RotateCcw, RotateCw, Fullscreen, Minimize, FileQuestion } from 'lucide-react';
+import { PlayCircle, CheckCircle, ArrowLeft, ChevronRight, Sparkles, BookOpen, MessageSquare, Paperclip, Edit, Download, Users, Clock, Send, Save, Play, Pause, RotateCcw, RotateCw, Fullscreen, Minimize, FileQuestion, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import QuizPlayerModal from '../StudentDashboardComponents/QuizPlayerModal';
+import ReviewModal from '../StudentDashboardComponents/ReviewModal';
 
-import ReviewModal from '../StudentDashboardComponents/ReviewModal'; // 1. Import the new modal
 // --- ENHANCED VIDEO PLAYER COMPONENT ---
 const VideoPlayer = ({ src, onComplete }) => {
     const playerContainerRef = useRef(null);
@@ -136,8 +135,6 @@ const VideoPlayer = ({ src, onComplete }) => {
     );
 };
 
-
-// --- OTHER HELPER COMPONENTS ---
 const TabButton = ({ id, activeTab, setActiveTab, icon: Icon, children }) => (
     <button
         onClick={() => setActiveTab(id)}
@@ -368,7 +365,7 @@ export default function CoursePlayer() {
   const [currentLesson, setCurrentLesson] = useState(null);
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const [loading, setLoading] = useState(true);
-   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
   const [summary, setSummary] = useState("");
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
@@ -457,12 +454,11 @@ export default function CoursePlayer() {
 
         const currentIndex = lessons.findIndex(l => l._id === currentLesson._id);
         const nextLesson = lessons[currentIndex + 1];
+        
         if (nextLesson) {
             setCurrentLesson(nextLesson);
         } else {
-            toast.success("Congratulations! You've completed the course!");
-            // ✅ 3. Open the review modal when the course is finished
-            setIsReviewModalOpen(true);
+            toast.success("Congratulations! You've completed all the lessons!");
         }
     } catch (error) {
         toast.error("Couldn't save progress. Please try again.");
@@ -504,6 +500,7 @@ export default function CoursePlayer() {
   };
 
   const completionPercentage = lessons.length > 0 ? (completedLessons.size / lessons.length) * 100 : 0;
+  const isCourseComplete = completionPercentage === 100;
   const nextLesson = currentLesson ? lessons[lessons.findIndex(l => l._id === currentLesson._id) + 1] : null;
 
   if (loading) {
@@ -633,7 +630,28 @@ export default function CoursePlayer() {
                         </div>
                     )}
 
-                    {nextLesson && (
+                    {isCourseComplete && !nextLesson ? (
+                        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border-2 border-dashed border-indigo-400 dark:border-indigo-600 shadow-lg text-center">
+                           <h3 className="text-xl font-bold text-gray-800 dark:text-white">You've finished the lessons!</h3>
+                           {course.certificateId ? (
+                                <>
+                                    <p className="text-gray-600 dark:text-gray-300 mt-2">You've already earned your certificate for this course.</p>
+                                    <Link to={`/certificate/${course.certificateId}`} className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">
+                                        <Award size={18} /> View Your Certificate
+                                    </Link>
+                                </>
+                           ) : course.assessmentId ? (
+                                <>
+                                    <p className="text-gray-600 dark:text-gray-300 mt-2">Now, head to the assessments page to earn your certificate.</p>
+                                    <Link to="/dashboard/assessments" className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">
+                                        <FileQuestion size={18} /> Go to Assessments
+                                    </Link>
+                                </>
+                           ) : (
+                                <p className="text-gray-600 dark:text-gray-300 mt-2">Congratulations on completing the course!</p>
+                           )}
+                        </div>
+                    ) : nextLesson ? (
                         <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex justify-between items-center">
                             <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Next up</p>
@@ -643,7 +661,7 @@ export default function CoursePlayer() {
                                 Next Lesson <ChevronRight size={16} />
                             </button>
                         </div>
-                    )}
+                    ) : null}
                   </div>
                 ) : (
                   <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-900 rounded-2xl h-full min-h-[60vh]">
@@ -705,7 +723,6 @@ export default function CoursePlayer() {
         onClose={() => setIsReviewModalOpen(false)}
         course={course}
         onReviewSubmitted={() => {
-            // You could add logic here to refetch course data to show an updated rating
             console.log("Review submitted!");
         }}
       />

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { ClipboardCheck, Play, Check, RotateCw, Eye } from 'lucide-react';
+import { ClipboardCheck, Play, Check, RotateCw, Eye, Lock } from 'lucide-react';
 
 // --- Skeleton Loader Component ---
 const AssessmentCardSkeleton = () => (
@@ -53,6 +53,7 @@ const AssessmentsView = () => {
                         label: 'View Results',
                         icon: <Eye size={18} />,
                         actionColor: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400 font-semibold',
+                        disabled: false,
                     },
                 };
             case 'Failed':
@@ -65,6 +66,20 @@ const AssessmentsView = () => {
                         label: 'Retake Test',
                         icon: <RotateCw size={18} />,
                         actionColor: 'bg-red-600 hover:bg-red-700 text-white',
+                        disabled: false,
+                    },
+                };
+            case 'Locked':
+                 return {
+                    label: 'Locked',
+                    color: 'from-gray-400 to-gray-300 dark:from-gray-600 dark:to-gray-500',
+                    bgColor: 'bg-gray-100 dark:bg-gray-800/40',
+                    shadowColor: 'hover:shadow-gray-300 dark:hover:shadow-gray-600',
+                    button: {
+                        label: 'Locked',
+                        icon: <Lock size={18} />,
+                        actionColor: 'bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed',
+                        disabled: true,
                     },
                 };
             default: // Not Started
@@ -77,6 +92,7 @@ const AssessmentsView = () => {
                         label: 'Start Test',
                         icon: <Play size={18} />,
                         actionColor: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+                        disabled: false,
                     },
                 };
         }
@@ -101,6 +117,16 @@ const AssessmentsView = () => {
                 ) : (
                     assessments.map((assessment) => {
                         const info = getStatusInfo(assessment.status);
+                        const buttonContent = (
+                            <div
+                                title={info.button.disabled ? "Complete all course lessons to unlock" : ""}
+                                className={`mt-auto flex items-center justify-center gap-3 w-full rounded-xl py-3 font-semibold transition-transform active:scale-95 ${info.button.actionColor}`}
+                            >
+                                {info.button.label}
+                                {info.button.icon}
+                            </div>
+                        );
+
                         return (
                             <article
                                 key={assessment._id}
@@ -117,16 +143,16 @@ const AssessmentsView = () => {
                                         Final assessment for this course.
                                     </p>
                                 </div>
-                                <Link
-                                    to={`/assessment/${assessment._id}`}
-                                    // ** THE FIX IS HERE **
-                                    // If the assessment is completed, pass the attempt data in the link's state
-                                    state={assessment.status === 'Completed' ? { attempt: assessment.attempt } : {}}
-                                    className={`mt-auto flex items-center justify-center gap-3 w-full rounded-xl py-3 font-semibold transition-transform active:scale-95 ${info.button.actionColor}`}
-                                >
-                                    {info.button.label}
-                                    {info.button.icon}
-                                </Link>
+                                {info.button.disabled ? (
+                                    buttonContent
+                                ) : (
+                                    <Link
+                                        to={`/assessment/${assessment._id}`}
+                                        state={assessment.status === 'Completed' ? { attempt: assessment.attempt } : null}
+                                    >
+                                        {buttonContent}
+                                    </Link>
+                                )}
                             </article>
                         );
                     })

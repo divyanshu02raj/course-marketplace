@@ -1,5 +1,8 @@
-// controllers/courseController.js
 const Course = require("../models/Course");
+const Assessment = require("../models/Assessment");
+const Certificate = require("../models/Certificate");
+const AssessmentAttempt = require("../models/AssessmentAttempt");
+
 
 // --- Public & Student Functions ---
 
@@ -90,8 +93,39 @@ const getMyCourses = async (req, res) => {
 // Get a course by ID
 const getCourseById = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id).populate("instructor", "name email");
+    const course = await Course.findById(req.params.id)
+        .populate("instructor", "name email")
+        .lean(); // Use lean for better performance and to allow modification
+
     if (!course) return res.status(404).json({ message: "Course not found" });
+
+    // ** THE FIX IS HERE **
+    // Now, we check for an assessment and certificate for this course
+    const studentId = req.user._id;
+
+    const assessment = await Assessment.findOne({ course: course._id }).lean();
+    
+    if (assessment) {
+        course.assessmentId = assessment._id;
+
+        // Check if the student has already passed this assessment
+        const passedAttempt = await AssessmentAttempt.findOne({
+            assessment: assessment._id,
+            student: studentId,
+            passed: true
+        });
+
+        if (passedAttempt) {
+            const certificate = await Certificate.findOne({
+                course: course._id,
+                user: studentId
+            }).lean();
+            if (certificate) {
+                course.certificateId = certificate.certificateId;
+            }
+        }
+    }
+
     res.json(course);
   } catch (err) {
     res.status(500).json({ message: "Error fetching course: " + err.message });
