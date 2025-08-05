@@ -29,9 +29,8 @@ export default function VerifyCertificatePage() {
         const verify = async () => {
             try {
                 // ** THE FIX IS HERE **
-                // Re-added the localhost fallback. This allows the code to work both
-                // locally (where the env var is undefined) and when deployed (where it is defined).
-                const baseApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+                // Using the correct environment variable name: REACT_APP_API_BASE_URL
+                const baseApiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
                 
                 const apiUrl = `${baseApiUrl}/api/certificates/verify/${certificateId}`;
                 const res = await axios.get(apiUrl);
