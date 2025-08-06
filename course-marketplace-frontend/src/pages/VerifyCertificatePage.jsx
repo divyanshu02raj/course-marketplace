@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { XCircle, Award } from 'lucide-react';
+import { CheckCircle, XCircle, Award, User, BookOpen, Calendar, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 
 // --- Skeleton Loader ---
 const VerificationSkeleton = () => (
-    <div className="w-full max-w-5xl aspect-[1.414/1] bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 animate-pulse">
-        <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded w-1/3 mx-auto mb-12"></div>
-        <div className="h-8 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mx-auto mb-4"></div>
-        <div className="h-16 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mx-auto mb-4"></div>
-        <div className="h-8 bg-gray-200 dark:bg-gray-600 rounded w-2/3 mx-auto"></div>
+    <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 sm:p-12 animate-pulse">
+        <div className="h-16 w-16 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
+        <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto mb-4"></div>
+        <div className="h-5 bg-gray-200 dark:bg-gray-600 rounded w-3/4 mx-auto mb-8"></div>
+        <div className="space-y-4 bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+            <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+        </div>
     </div>
 );
 
@@ -53,6 +57,10 @@ export default function VerifyCertificatePage() {
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-950 p-4 sm:p-8 flex flex-col items-center justify-center text-center font-['Montserrat',sans-serif]">
+            <Link to="/" className="mb-8 print:hidden">
+                <img src="/full noBgBlack.png" alt="Logo" className="h-12 dark:hidden" />
+                <img src="/full noBgColor.png" alt="Logo" className="h-12 hidden dark:block" />
+            </Link>
 
             {loading && <VerificationSkeleton />}
 
@@ -78,16 +86,8 @@ export default function VerifyCertificatePage() {
                             <h1 className="text-3xl font-bold leading-tight">Certificate Verified</h1>
                         </div>
                         <div className="text-center">
-                             <QRCodeSVG
-                                value={verificationUrl}
-                                size={80}
-                                bgColor="#ffffff"
-                                fgColor="#1e3a8a"
-                                level="H"
-                                includeMargin={true}
-                                className="rounded-md"
-                            />
-                             <p className="text-xs opacity-80 mt-2">Authenticity Confirmed</p>
+                             <CheckCircle className="mx-auto h-16 w-16 text-green-300 mb-2" />
+                             <p className="text-xs opacity-80">Authenticity Confirmed</p>
                         </div>
                     </div>
 
@@ -100,12 +100,18 @@ export default function VerifyCertificatePage() {
                         <h2 className="text-5xl sm:text-6xl font-extrabold text-gray-800 dark:text-white my-4">
                             {verificationData.studentName}
                         </h2>
-                        <p className="text-lg font-medium text-gray-500 dark:text-gray-400">
-                            successfully completed the course
+                        <p className="text-md font-medium text-gray-500 dark:text-gray-400 max-w-xl">
+                            in recognition of their dedication, effort, and successful mastery of the course material for
                         </p>
                         <h3 className="text-3xl sm:text-4xl font-bold text-indigo-700 dark:text-indigo-400 mt-2">
                             {verificationData.courseTitle}
                         </h3>
+                        {verificationData.score && (
+                            <p className="mt-4 text-lg font-semibold text-green-600 dark:text-green-400 flex items-center gap-2">
+                                <Star size={18} />
+                                Achieved with a final score of {verificationData.score.toFixed(1)}%
+                            </p>
+                        )}
                         <div className="mt-auto pt-12 flex justify-between items-end text-sm text-gray-600 dark:text-gray-300">
                             <div>
                                 <p className="font-bold text-gray-800 dark:text-white border-b-2 border-gray-300 dark:border-gray-600 pb-1">

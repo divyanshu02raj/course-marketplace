@@ -1,4 +1,6 @@
 const Certificate = require('../models/Certificate');
+const Assessment = require('../models/Assessment');
+const AssessmentAttempt = require('../models/AssessmentAttempt');
 
 // Get all certificates for the currently logged-in user
 exports.getMyCertificates = async (req, res) => {
@@ -25,7 +27,8 @@ exports.getCertificateById = async (req, res) => {
                     path: 'instructor',
                     select: 'name'
                 }
-            });
+            })
+            .lean(); // Use lean to allow modification
 
         if (!certificate) {
             return res.status(404).json({ message: 'Certificate not found.' });
@@ -34,6 +37,21 @@ exports.getCertificateById = async (req, res) => {
         if (certificate.user._id.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "You are not authorized to view this certificate." });
         }
+        
+        // ** THE FIX IS HERE **
+        // Find the assessment and the passing attempt to get the score
+        const assessment = await Assessment.findOne({ course: certificate.course._id });
+        if (assessment) {
+            const attempt = await AssessmentAttempt.findOne({
+                assessment: assessment._id,
+                student: certificate.user._id,
+                passed: true
+            }).sort({ score: -1 }); // Get the highest scoring attempt
+
+            if (attempt) {
+                certificate.score = attempt.score; // Add score to the response
+            }
+        }
 
         res.json(certificate);
     } catch (error) {
@@ -41,17 +59,11 @@ exports.getCertificateById = async (req, res) => {
     }
 };
 
-/**
- * @desc    Verify a certificate publicly
- * @route   GET /api/certificates/verify/:certificateId
- * @access  Public
- */
+// Verify a certificate publicly
 exports.verifyCertificate = async (req, res) => {
     try {
         const certificate = await Certificate.findOne({ certificateId: req.params.certificateId })
             .populate('user', 'name')
-            // ** THE FIX IS HERE **
-            // Now populating the instructor's name from the course
             .populate({
                 path: 'course',
                 select: 'title',
@@ -65,13 +77,28 @@ exports.verifyCertificate = async (req, res) => {
             return res.status(404).json({ message: 'Certificate not found or invalid.' });
         }
 
-        // Return all necessary public information to render the certificate
+        // ** THE FIX IS HERE **
+        // Also find the score for the public verification page
+        let finalScore = null;
+        const assessment = await Assessment.findOne({ course: certificate.course._id });
+        if (assessment) {
+            const attempt = await AssessmentAttempt.findOne({
+                assessment: assessment._id,
+                student: certificate.user._id,
+                passed: true
+            }).sort({ score: -1 });
+
+            if (attempt) {
+                finalScore = attempt.score;
+            }
+        }
+
         res.json({
             studentName: certificate.user.name,
             courseTitle: certificate.course.title,
             instructorName: certificate.course.instructor.name,
             issueDate: certificate.issueDate,
-            certificateId: certificate.certificateId,
+            score: finalScore, // Add score to the response
             isValid: true
         });
     } catch (error) {
