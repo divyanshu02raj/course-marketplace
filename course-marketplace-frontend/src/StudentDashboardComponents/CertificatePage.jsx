@@ -37,7 +37,8 @@ export default function CertificatePage() {
     }
 
     const logoSrc = '/full noBgColor.png';
-    const verificationUrl = `${window.location.origin}/verify-certificate/${certificate.certificateId}`;
+        const baseUrl = process.env.REACT_APP_BASE_URL;
+    const verificationUrl = `${baseUrl}/verify-certificate/${certificate.certificateId}`;
     
     const formattedDate = new Date(certificate.issueDate).toLocaleDateString('en-GB', {
         day: 'numeric', month: 'long', year: 'numeric'
@@ -67,15 +68,15 @@ export default function CertificatePage() {
                                 Issued in recognition of comprehensive learning and achievement.
                             </p>
                         </div>
-                        <div className="text-center space-y-[1em]">
-                            <div className="mx-auto w-[7em] h-[7em] bg-white/10 rounded-full flex items-center justify-center border-[0.25em] border-white/20">
+                          <div className="text-center space-y-[1em]">
+                            <div className="mx-auto w-[7em] h-[7em] bg-white/10 rounded-full flex items-center justify-center border-[0.25em] border-white/20 p-1">
                                 <QRCodeSVG
                                     value={verificationUrl}
                                     size={'100%'}
                                     bgColor="transparent"
                                     fgColor="#FFFFFF"
                                     level="H"
-                                    className="w-[5.5em] h-[5.5em]"
+                                    className="w-full h-full"
                                 />
                             </div>
                             <p className="text-[0.75em] opacity-80">Scan to Verify</p>
