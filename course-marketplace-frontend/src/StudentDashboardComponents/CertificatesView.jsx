@@ -1,11 +1,45 @@
-// src/StudentDashboardComponents/CertificatesView.jsx
 import React, { useState } from "react";
 import { Download, Eye, Award, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import axios from '../api/axios'; // Use your custom axios instance
+import toast from 'react-hot-toast';
 
 export default function CertificatesView({ certificates }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleDownload = async (certificate) => {
+    setDownloadingId(certificate.certificateId);
+    const toastId = toast.loading("Preparing your PDF...");
+    try {
+        // ** THE FIX IS HERE **
+        // We are now explicitly telling axios to include credentials (cookies) with this request.
+        // This is the most robust way to handle authenticated file downloads.
+        const response = await axios.get(`/certificates/${certificate.certificateId}/download`, {
+            responseType: 'blob',
+            withCredentials: true, // This line forces the auth cookie to be sent
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Certificate-${certificate.course.title.replace(/ /g, '_')}.pdf`);
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast.success("Download started!", { id: toastId });
+    } catch (error) {
+        console.error("PDF Download Error:", error);
+        toast.error("Could not download certificate.", { id: toastId });
+    } finally {
+        setDownloadingId(null);
+    }
+  };
 
   const filteredCertificates = certificates.filter((cert) => {
     if (!cert || !cert.course) {
@@ -63,9 +97,9 @@ export default function CertificatesView({ certificates }) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                   <div className="absolute bottom-4 left-4">
-                      <h3 className="text-lg font-bold text-white shadow-lg">
-                        {certificate.course.title}
-                      </h3>
+                    <h3 className="text-lg font-bold text-white shadow-lg">
+                      {certificate.course.title}
+                    </h3>
                   </div>
                 </div>
                 <div className="p-5 space-y-3">
@@ -88,9 +122,13 @@ export default function CertificatesView({ certificates }) {
                       <Eye className="w-4 h-4" />
                       View
                     </Link>
-                    <button className="flex-1 inline-flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg text-sm font-medium transition">
+                    <button 
+                        onClick={() => handleDownload(certificate)}
+                        disabled={downloadingId === certificate.certificateId}
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                    >
                       <Download className="w-4 h-4" />
-                      Download
+                      {downloadingId === certificate.certificateId ? '...' : 'Download'}
                     </button>
                   </div>
                 </div>

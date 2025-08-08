@@ -4,15 +4,18 @@ const { protect } = require("../middleware/authMiddleware");
 const { 
     getMyCertificates, 
     getCertificateById,
-    verifyCertificate // This was the missing import
+    verifyCertificate,
+    downloadCertificate // 1. Import the new function
 } = require("../controllers/certificateController");
 
 // --- PROTECTED ROUTES (for logged-in users) ---
 router.get("/my", protect, getMyCertificates);
 router.get("/:certificateId", protect, getCertificateById);
 
+// 2. Add the new download route
+router.get("/:certificateId/download", protect, downloadCertificate);
+
 // --- PUBLIC ROUTE ---
-// GET /api/certificates/verify/:certificateId - Verify a certificate's authenticity
 router.get("/verify/:certificateId", verifyCertificate);
 
 module.exports = router;
