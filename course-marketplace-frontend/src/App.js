@@ -17,7 +17,8 @@ const EditCourseView = lazy(() => import('./InstructorDashboardComponents/EditCo
 const ManageCourseView = lazy(() => import('./InstructorDashboardComponents/ManageCourseView'));
 const CertificatePage = lazy(() => import('./StudentDashboardComponents/CertificatePage'));
 const TakeAssessmentView = lazy(() => import('./StudentDashboardComponents/TakeAssessmentView'));
-const VerifyCertificatePage = lazy(() => import('./pages/VerifyCertificatePage')); // 1. Import the new page
+const VerifyCertificatePage = lazy(() => import('./pages/VerifyCertificatePage'));
+const PrintCertificatePage = lazy(() => import('./pages/PrintCertificatePage')); // 1. Import the new page
 
 // --- Fallback Loader ---
 const FullPageLoader = () => (
@@ -43,12 +44,12 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            {/* 2. Add the new public route for verification */}
             <Route path="/verify-certificate/:certificateId" element={<VerifyCertificatePage />} />
+            {/* 2. Add the new public route for printing */}
+            <Route path="/print-certificate" element={<PrintCertificatePage />} />
             
-            {/* Protected Routes for All Logged-in Users */}
+            {/* Protected Routes */}
             <Route element={<ProtectedRoute allowedRoles={["student", "instructor"]} />}>
-              {/* The /* allows for nested routes within the Dashboard component */}
               <Route path="/dashboard/*" element={<Dashboard />} />
               <Route path="/course/:courseId" element={<CourseDetailsPage />} />
               <Route path="/learn/:courseId" element={<CoursePlayer />} />
@@ -56,7 +57,6 @@ function App() {
                <Route path="/assessment/:assessmentId" element={<TakeAssessmentView />} />
             </Route>
             
-            {/* Protected Routes for Instructors Only */}
             <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
               <Route path="/instructor/course/edit/:courseId" element={<EditCourseView />} />
               <Route path="/instructor/course/manage/:courseId" element={<ManageCourseView />} />

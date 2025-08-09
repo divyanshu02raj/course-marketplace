@@ -3,7 +3,8 @@ const Assessment = require('../models/Assessment');
 const AssessmentAttempt = require('../models/AssessmentAttempt');
 const Course = require('../models/Course');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const puppeteer = require('puppeteer');
+
 
 // --- Other controller functions (getMyCertificates, etc.) remain the same ---
 exports.getMyCertificates = async (req, res) => {
@@ -139,69 +140,62 @@ exports.downloadCertificate = async (req, res) => {
         const { certificateId } = req.params;
         const userId = req.user._id;
 
-        const certificate = await Certificate.findOne({ certificateId, user: userId });
+        const certificate = await Certificate.findOne({ certificateId, user: userId })
+            .populate('user', 'name')
+            .populate({
+                path: 'course',
+                select: 'title instructor',
+                populate: { path: 'instructor', select: 'name' }
+            });
+
         if (!certificate) {
             return res.status(404).json({ message: "Certificate not found or you are not authorized." });
         }
 
-        // ** THE FIX IS HERE: Use the right browser for the environment **
-        let browserConfig;
-        if (process.env.NODE_ENV === 'production') {
-            // Use lightweight chromium for production (on Render)
-            const chromium = require('@sparticuz/chromium');
-            const puppeteer = require('puppeteer-core');
-            browserConfig = {
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath(),
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
-            };
-            browser = await puppeteer.launch(browserConfig);
-        } else {
-            // Use standard puppeteer for local development
-            const puppeteer = require('puppeteer');
-            browserConfig = {
-                headless: 'new', // Use the new headless mode
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            };
-            browser = await puppeteer.launch(browserConfig);
+        // 1. Get the score for the certificate
+        let finalScore = null;
+        const assessment = await Assessment.findOne({ course: certificate.course._id });
+        if (assessment) {
+            const attempt = await AssessmentAttempt.findOne({
+                assessment: assessment._id,
+                student: userId,
+                passed: true
+            }).sort({ score: -1 });
+            if (attempt) {
+                finalScore = attempt.score;
+            }
         }
 
-        const page = await browser.newPage();
-
-        const token = req.cookies.token;
-        if (token) {
-            const parsedUrl = new URL(process.env.ALLOWED_ORIGINS.split(',')[0]);
-            await page.setCookie({
-                name: 'token',
-                value: token,
-                domain: parsedUrl.hostname,
-                path: '/',
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-            });
-        } else {
-             return res.status(401).json({ message: 'Authentication cookie not found.' });
-        }
+        // 2. Create a data payload for the certificate
+        const certificateData = {
+            studentName: certificate.user.name,
+            courseTitle: certificate.course.title,
+            instructorName: certificate.course.instructor.name,
+            issueDate: certificate.issueDate,
+            score: finalScore,
+            certificateId: certificate.certificateId
+        };
         
+        // 3. Generate a short-lived, single-purpose JWT containing this data
+        const printToken = jwt.sign(certificateData, process.env.JWT_SECRET, { expiresIn: '5m' });
+
+        // 4. Determine the frontend URL
         let frontendUrl;
         const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',');
-        if (process.env.NODE_ENV === 'production') {
-            frontendUrl = allowedOrigins.find(url => url.startsWith('https'));
-        } else {
-            frontendUrl = allowedOrigins.find(url => url.startsWith('http://localhost'));
-        }
-        if (!frontendUrl) {
-            frontendUrl = 'http://localhost:3000';
-        }
-        
-        const certificateUrl = `${frontendUrl}/certificate/${certificateId}?print=true`;
-        
-        await page.goto(certificateUrl, {
-            waitUntil: 'networkidle0'
-        });
+        frontendUrl = process.env.NODE_ENV === 'production' 
+            ? allowedOrigins.find(url => url.startsWith('https'))
+            : allowedOrigins.find(url => url.startsWith('http://localhost'));
+        if (!frontendUrl) frontendUrl = 'http://localhost:3000';
 
+        // 5. Launch Puppeteer and navigate to the new public print page
+        browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        const page = await browser.newPage();
+        
+        const printUrl = `${frontendUrl}/print-certificate?token=${printToken}`;
+        
+        await page.goto(printUrl, { waitUntil: 'networkidle0' });
+
+        // 6. Generate the PDF
         const pdfBuffer = await page.pdf({
             format: 'A4',
             landscape: true,
@@ -211,6 +205,7 @@ exports.downloadCertificate = async (req, res) => {
 
         await browser.close();
 
+        // 7. Send the PDF to the user
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Length': pdfBuffer.length,
@@ -220,7 +215,7 @@ exports.downloadCertificate = async (req, res) => {
 
     } catch (error) {
         console.error("PDF Download Error:", error);
-        res.status(500).json({ message: `Error generating certificate PDF: ${error.message}` });
+        res.status(500).json({ message: "Error generating certificate PDF." });
     } finally {
         if (browser) {
             await browser.close();
