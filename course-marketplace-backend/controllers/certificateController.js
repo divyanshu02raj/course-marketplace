@@ -5,7 +5,6 @@ const Course = require('../models/Course');
 const jwt = require('jsonwebtoken');
 const puppeteer = require('puppeteer');
 
-
 // --- Other controller functions (getMyCertificates, etc.) remain the same ---
 exports.getMyCertificates = async (req, res) => {
     try {
@@ -130,7 +129,7 @@ exports.verifyCertificate = async (req, res) => {
 };
 
 /**
- * @desc    Generate and download a certificate as a PDF
+ * @desc    Generate and download a certificate as a PDF using a secure token method
  * @route   GET /api/certificates/:certificateId/download
  * @access  Private
  */
@@ -152,7 +151,6 @@ exports.downloadCertificate = async (req, res) => {
             return res.status(404).json({ message: "Certificate not found or you are not authorized." });
         }
 
-        // 1. Get the score for the certificate
         let finalScore = null;
         const assessment = await Assessment.findOne({ course: certificate.course._id });
         if (assessment) {
@@ -166,7 +164,6 @@ exports.downloadCertificate = async (req, res) => {
             }
         }
 
-        // 2. Create a data payload for the certificate
         const certificateData = {
             studentName: certificate.user.name,
             courseTitle: certificate.course.title,
@@ -176,10 +173,8 @@ exports.downloadCertificate = async (req, res) => {
             certificateId: certificate.certificateId
         };
         
-        // 3. Generate a short-lived, single-purpose JWT containing this data
         const printToken = jwt.sign(certificateData, process.env.JWT_SECRET, { expiresIn: '5m' });
 
-        // 4. Determine the frontend URL
         let frontendUrl;
         const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',');
         frontendUrl = process.env.NODE_ENV === 'production' 
@@ -187,15 +182,32 @@ exports.downloadCertificate = async (req, res) => {
             : allowedOrigins.find(url => url.startsWith('http://localhost'));
         if (!frontendUrl) frontendUrl = 'http://localhost:3000';
 
-        // 5. Launch Puppeteer and navigate to the new public print page
-        browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-        const page = await browser.newPage();
+        let browserConfig;
+        if (process.env.NODE_ENV === 'production') {
+            const chromium = require('@sparticuz/chromium');
+            const puppeteer = require('puppeteer-core');
+            browserConfig = {
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless,
+                ignoreHTTPSErrors: true,
+            };
+            browser = await puppeteer.launch(browserConfig);
+        } else {
+            const puppeteer = require('puppeteer');
+            browserConfig = {
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            };
+            browser = await puppeteer.launch(browserConfig);
+        }
         
+        const page = await browser.newPage();
         const printUrl = `${frontendUrl}/print-certificate?token=${printToken}`;
         
         await page.goto(printUrl, { waitUntil: 'networkidle0' });
 
-        // 6. Generate the PDF
         const pdfBuffer = await page.pdf({
             format: 'A4',
             landscape: true,
@@ -205,7 +217,6 @@ exports.downloadCertificate = async (req, res) => {
 
         await browser.close();
 
-        // 7. Send the PDF to the user
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Length': pdfBuffer.length,

@@ -24,7 +24,7 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "puppeteer": "^24.16.0",
-    "puppeteer-core": "^24.16.0",
+    "puppeteer-core": "^24.16.2",
     "razorpay": "^2.9.6",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0"

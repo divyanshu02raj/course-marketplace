@@ -18,7 +18,7 @@ const ManageCourseView = lazy(() => import('./InstructorDashboardComponents/Mana
 const CertificatePage = lazy(() => import('./StudentDashboardComponents/CertificatePage'));
 const TakeAssessmentView = lazy(() => import('./StudentDashboardComponents/TakeAssessmentView'));
 const VerifyCertificatePage = lazy(() => import('./pages/VerifyCertificatePage'));
-const PrintCertificatePage = lazy(() => import('./pages/PrintCertificatePage')); // 1. Import the new page
+const PrintCertificatePage = lazy(() => import('./pages/PrintCertificatePage'));
 
 // --- Fallback Loader ---
 const FullPageLoader = () => (
@@ -40,23 +40,23 @@ function App() {
       <Router>
         <Suspense fallback={<FullPageLoader />}>
           <Routes>
-            {/* Public Routes */}
+            {/* --- Public Routes --- */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-certificate/:certificateId" element={<VerifyCertificatePage />} />
-            {/* 2. Add the new public route for printing */}
             <Route path="/print-certificate" element={<PrintCertificatePage />} />
             
-            {/* Protected Routes */}
+            {/* --- Protected Routes for All Logged-in Users --- */}
             <Route element={<ProtectedRoute allowedRoles={["student", "instructor"]} />}>
               <Route path="/dashboard/*" element={<Dashboard />} />
               <Route path="/course/:courseId" element={<CourseDetailsPage />} />
               <Route path="/learn/:courseId" element={<CoursePlayer />} />
               <Route path="/certificate/:certificateId" element={<CertificatePage />} />
-               <Route path="/assessment/:assessmentId" element={<TakeAssessmentView />} />
+              <Route path="/assessment/:assessmentId" element={<TakeAssessmentView />} />
             </Route>
             
+            {/* --- Protected Routes for Instructors Only --- */}
             <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
               <Route path="/instructor/course/edit/:courseId" element={<EditCourseView />} />
               <Route path="/instructor/course/manage/:courseId" element={<ManageCourseView />} />
