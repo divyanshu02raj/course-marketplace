@@ -1,9 +1,9 @@
 // src/InstructorDashboardComponents/CreateCourseView.jsx
 import { useState } from "react";
-import { UploadCloud } from "lucide-react";
+import { Upload, BookOpenCheck } from "lucide-react";
 import axios from "../api/axios";
 import baseAxios from "axios";
-import toast from "react-hot-toast"; // Import toast
+import toast from "react-hot-toast";
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dg05wkeqo/image/upload";
 
@@ -61,7 +61,7 @@ export default function CreateCourseView() {
         thumbnail: thumbnailUrl, status: "draft",
       };
 
-      const response = await axios.post("/courses", courseData);
+      await axios.post("/courses", courseData);
 
       toast.success("Course created successfully!", { id: toastId });
 
@@ -83,137 +83,161 @@ export default function CreateCourseView() {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-12 py-8">
-      {/* ... JSX remains the same ... */}
-       <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-8">📘 Create a New Course</h2>
-       <form onSubmit={handleSubmit} className="space-y-10">
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-           <div>
-             <label className="block text-sm font-medium mb-2">Course Title</label>
-             <input
-               type="text"
-               className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
-               placeholder="e.g., Advanced Next.js"
-               value={title}
-               onChange={(e) => setTitle(e.target.value)}
-               required
-             />
-             {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-           </div>
-           <div>
-             <label className="block text-sm font-medium mb-2">Short Description</label>
-             <input
-               type="text"
-               className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
-               placeholder="Quick summary for listing"
-               value={shortDesc}
-               onChange={(e) => setShortDesc(e.target.value)}
-               required
-             />
-             {errors.shortDesc && <p className="text-red-500 text-sm mt-1">{errors.shortDesc}</p>}
-           </div>
-         </div>
-         <div>
-           <label className="block text-sm font-medium mb-2">Detailed Description</label>
-           <textarea
-             rows="6"
-             className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
-             placeholder="Explain what students will learn, course format, etc."
-             value={description}
-             onChange={(e) => setDescription(e.target.value)}
-             required
-           ></textarea>
-           {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-         </div>
-         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-           <div>
-             <label className="block text-sm font-medium mb-2">Category</label>
-             <select
-               className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
-               value={category}
-               onChange={(e) => setCategory(e.target.value)}
-               required
-             >
-               <option value="">Select a category</option>
-               <option value="web-dev">Web Development</option>
-               <option value="design">Design</option>
-               <option value="marketing">Marketing</option>
-               <option value="ai">Artificial Intelligence</option>
-             </select>
-             {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
-           </div>
-           <div>
-             <label className="block text-sm font-medium mb-2">Price (INR)</label>
-             <input
-               type="number"
-               min="0"
-               step="0.01"
-               className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
-               placeholder="e.g., 49.99"
-               value={price}
-               onChange={(e) => setPrice(e.target.value)}
-               required
-             />
-             {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
-           </div>
-         </div>
-         <div>
-           <label className="block text-sm font-medium mb-2">Course Thumbnail</label>
-           <div className="flex flex-col sm:flex-row gap-6 items-start">
-             <label className="relative flex flex-col justify-center items-center w-full sm:w-64 h-40 bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-indigo-400 rounded-lg cursor-pointer hover:border-indigo-600 transition">
-               {previewUrl ? (
-                 <img src={previewUrl} alt="Thumbnail Preview" className="w-full h-full object-cover rounded-lg" />
-               ) : (
-                 <div className="text-center text-gray-500 dark:text-gray-400 flex flex-col items-center">
-                   <UploadCloud className="w-8 h-8 mb-2" />
-                   <span className="text-sm">Upload Thumbnail</span>
-                   <span className="text-xs">PNG, JPG, JPEG</span>
-                 </div>
-               )}
-               <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
-             </label>
-             {thumbnail && (
-               <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                 <p>File selected: <strong>{thumbnail.name}</strong></p>
-               </div>
-             )}
-           </div>
-         </div>
-         <div>
-           <button
-             type="submit"
-             disabled={loading}
-             className="inline-flex items-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition disabled:opacity-50"
-           >
-             {loading ? (
-               <>
-                 <svg
-                   className="animate-spin mr-2 h-5 w-5 text-white"
-                   xmlns="http://www.w3.org/2000/svg"
-                   fill="none"
-                   viewBox="0 0 24 24"
-                 >
-                   <circle
-                     className="opacity-25"
-                     cx="12"
-                     cy="12"
-                     r="10"
-                     stroke="currentColor"
-                     strokeWidth="4"
-                   />
-                   <path
-                     className="opacity-75"
-                     fill="currentColor"
-                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                   />
-                 </svg>
-                 Submitting...
-               </>
-             ) : (
-               "🎉 Submit Course"
-             )}
-           </button>
-         </div>
-       </form>
+      {/* Page header */}
+      <div className="mb-10 flex items-center gap-3">
+        <BookOpenCheck className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          Create a New Course
+        </h2>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        
+        {/* Basic Info Card */}
+        <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+            📘 Basic Information
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Course Title</label>
+              <input
+                type="text"
+                className={`w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border ${
+                  errors.title ? "border-red-500" : "border-gray-300 dark:border-gray-700"
+                } text-gray-900 dark:text-white`}
+                placeholder="e.g., Advanced Next.js"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Short Description</label>
+              <input
+                type="text"
+                className={`w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border ${
+                  errors.shortDesc ? "border-red-500" : "border-gray-300 dark:border-gray-700"
+                } text-gray-900 dark:text-white`}
+                placeholder="Quick summary for listing"
+                value={shortDesc}
+                onChange={(e) => setShortDesc(e.target.value)}
+              />
+              {errors.shortDesc && <p className="text-red-500 text-sm mt-1">{errors.shortDesc}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Description Card */}
+        <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+            📝 Course Details
+          </h3>
+          <textarea
+            rows="6"
+            className={`w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border ${
+              errors.description ? "border-red-500" : "border-gray-300 dark:border-gray-700"
+            } text-gray-900 dark:text-white`}
+            placeholder="Explain what students will learn, course format, etc."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          ></textarea>
+          {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+        </div>
+
+        {/* Pricing & Category Card */}
+        <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+            💰 Pricing & Category
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Category</label>
+              <select
+                className={`w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border ${
+                  errors.category ? "border-red-500" : "border-gray-300 dark:border-gray-700"
+                } text-gray-900 dark:text-white`}
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">Select a category</option>
+                <option value="web-dev">Web Development</option>
+                <option value="design">Design</option>
+                <option value="marketing">Marketing</option>
+                <option value="ai">Artificial Intelligence</option>
+              </select>
+              {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Price (INR)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className={`w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border ${
+                  errors.price ? "border-red-500" : "border-gray-300 dark:border-gray-700"
+                } text-gray-900 dark:text-white`}
+                placeholder="e.g., 499"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+              {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Thumbnail Upload */}
+        <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+            🖼️ Course Thumbnail
+          </h3>
+          <label className="relative flex flex-col justify-center items-center w-full sm:w-72 h-48 bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-indigo-400 rounded-xl cursor-pointer hover:border-indigo-600 transition">
+            {previewUrl ? (
+              <img src={previewUrl} alt="Thumbnail Preview" className="w-full h-full object-cover rounded-xl" />
+            ) : (
+              <div className="text-center text-gray-500 dark:text-gray-400 flex flex-col items-center">
+                <Upload className="w-10 h-10 mb-2" />
+                <span className="text-sm">Upload Thumbnail</span>
+                <span className="text-xs">PNG, JPG, JPEG</span>
+              </div>
+            )}
+            <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
+          </label>
+          {thumbnail && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              File selected: <strong>{thumbnail.name}</strong>
+            </p>
+          )}
+        </div>
+
+        {/* Submit */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin mr-2 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                Submitting...
+              </>
+            ) : (
+              <>
+                🚀 Submit Course
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
