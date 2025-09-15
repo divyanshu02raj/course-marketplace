@@ -1,4 +1,4 @@
-// models/Review.js
+// course-marketplace-backend\models\Review.js
 const mongoose = require("mongoose");
 
 const ReviewSchema = new mongoose.Schema({
@@ -12,6 +12,7 @@ const ReviewSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  // The star rating given by the user, constrained from 1 to 5.
   rating: {
     type: Number,
     required: true,
@@ -24,7 +25,7 @@ const ReviewSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// Ensure a user can only review a course once
+// This unique index ensures that a user can only submit one review per course.
 ReviewSchema.index({ course: 1, user: 1 }, { unique: true });
 
 module.exports = mongoose.model("Review", ReviewSchema);

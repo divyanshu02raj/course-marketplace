@@ -1,4 +1,4 @@
-// src/InstructorDashboardComponents/InstructorCoursesView.jsx
+// course-marketplace-frontend\src\InstructorDashboardComponents\InstructorCoursesView.jsx
 import { useEffect, useState } from "react";
 import { Edit, Trash2, Eye, RefreshCw, Users } from "lucide-react";
 import axios from "../api/axios";
@@ -103,7 +103,6 @@ export default function InstructorCoursesView() {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-12 py-8 text-gray-900 dark:text-white">
-      {/* ... JSX remains the same ... */}
        <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
          📚 Your Courses
        </h2>

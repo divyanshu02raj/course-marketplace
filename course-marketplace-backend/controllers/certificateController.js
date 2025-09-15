@@ -1,3 +1,4 @@
+// course-marketplace-backend/controllers/certificateController.js
 const Certificate = require('../models/Certificate');
 const Assessment = require('../models/Assessment');
 const AssessmentAttempt = require('../models/AssessmentAttempt');
@@ -5,7 +6,7 @@ const Course = require('../models/Course');
 const jwt = require('jsonwebtoken');
 const puppeteer = require('puppeteer');
 
-// --- Other controller functions (getMyCertificates, etc.) remain the same ---
+// Fetches all certificates belonging to the currently logged-in user.
 exports.getMyCertificates = async (req, res) => {
     try {
         const studentId = req.user._id;
@@ -22,6 +23,7 @@ exports.getMyCertificates = async (req, res) => {
             .sort({ issueDate: -1 })
             .lean();
 
+        // For each certificate, find the associated score from their best passing attempt.
         for (const cert of certificates) {
             const assessment = await Assessment.findOne({ course: cert.course._id });
             if (assessment) {
@@ -29,7 +31,7 @@ exports.getMyCertificates = async (req, res) => {
                     assessment: assessment._id,
                     student: studentId,
                     passed: true
-                }).sort({ score: -1 });
+                }).sort({ score: -1 }); // Get the highest score
                 if (attempt) {
                     cert.score = attempt.score;
                 }
@@ -42,6 +44,7 @@ exports.getMyCertificates = async (req, res) => {
         res.status(500).json({ message: "Error fetching your certificates." });
     }
 };
+
 exports.getCertificateById = async (req, res) => {
     try {
         const certificate = await Certificate.findOne({ certificateId: req.params.certificateId })
@@ -64,6 +67,7 @@ exports.getCertificateById = async (req, res) => {
             return res.status(403).json({ message: "You are not authorized to view this certificate." });
         }
         
+        // Find the score from the student's highest-scoring passed attempt.
         const assessment = await Assessment.findOne({ course: certificate.course._id });
         if (assessment) {
             const attempt = await AssessmentAttempt.findOne({
@@ -83,6 +87,8 @@ exports.getCertificateById = async (req, res) => {
         res.status(500).json({ message: "Error fetching certificate." });
     }
 };
+
+// Public endpoint to verify a certificate's authenticity via its unique ID (e.g., from a QR code).
 exports.verifyCertificate = async (req, res) => {
     try {
         const certificate = await Certificate.findOne({ certificateId: req.params.certificateId })
@@ -100,6 +106,7 @@ exports.verifyCertificate = async (req, res) => {
             return res.status(404).json({ message: 'Certificate not found or invalid.' });
         }
 
+        // Fetch the final score to display on the public verification page.
         let finalScore = null;
         const assessment = await Assessment.findOne({ course: certificate.course._id });
         if (assessment) {
@@ -128,11 +135,7 @@ exports.verifyCertificate = async (req, res) => {
     }
 };
 
-/**
- * @desc    Generate and download a certificate as a PDF using a secure token method
- * @route   GET /api/certificates/:certificateId/download
- * @access  Private
- */
+// Generates a PDF of the certificate by securely rendering a frontend page using Puppeteer.
 exports.downloadCertificate = async (req, res) => {
     let browser = null;
     try {
@@ -173,6 +176,8 @@ exports.downloadCertificate = async (req, res) => {
             certificateId: certificate.certificateId
         };
         
+        // Create a short-lived, secure token containing the certificate data.
+        // This prevents users from creating fake certificates by manipulating URL params.
         const printToken = jwt.sign(certificateData, process.env.JWT_SECRET, { expiresIn: '5m' });
 
         let frontendUrl;
@@ -182,20 +187,19 @@ exports.downloadCertificate = async (req, res) => {
             : allowedOrigins.find(url => url.startsWith('http://localhost'));
         if (!frontendUrl) frontendUrl = 'http://localhost:3000';
 
+        // Use a lightweight chromium binary for production (serverless friendly) and full puppeteer for development.
         let browserConfig;
         if (process.env.NODE_ENV === 'production') {
             const chromium = require('@sparticuz/chromium');
-            const puppeteer = require('puppeteer-core');
+            const puppeteerCore = require('puppeteer-core');
             browserConfig = {
                 args: chromium.args,
                 defaultViewport: chromium.defaultViewport,
                 executablePath: await chromium.executablePath(),
                 headless: chromium.headless,
-                ignoreHTTPSErrors: true,
             };
-            browser = await puppeteer.launch(browserConfig);
+            browser = await puppeteerCore.launch(browserConfig);
         } else {
-            const puppeteer = require('puppeteer');
             browserConfig = {
                 headless: 'new',
                 args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -206,6 +210,7 @@ exports.downloadCertificate = async (req, res) => {
         const page = await browser.newPage();
         const printUrl = `${frontendUrl}/print-certificate?token=${printToken}`;
         
+        // Navigate to the frontend page and wait until it's fully loaded.
         await page.goto(printUrl, { waitUntil: 'networkidle0' });
 
         const pdfBuffer = await page.pdf({
@@ -215,11 +220,10 @@ exports.downloadCertificate = async (req, res) => {
             margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
         });
 
-        await browser.close();
-
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Length': pdfBuffer.length,
+            // Tells the browser to prompt a download with a specific filename.
             'Content-Disposition': `attachment; filename="certificate-${certificateId}.pdf"`
         });
         res.send(pdfBuffer);
@@ -228,6 +232,7 @@ exports.downloadCertificate = async (req, res) => {
         console.error("PDF Download Error:", error);
         res.status(500).json({ message: "Error generating certificate PDF." });
     } finally {
+        // Ensure the browser instance is always closed to prevent memory leaks.
         if (browser) {
             await browser.close();
         }

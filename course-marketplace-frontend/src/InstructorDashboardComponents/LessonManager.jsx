@@ -1,4 +1,4 @@
-// src/InstructorDashboardComponents/LessonManager.jsx
+// course-marketplace-frontend\src\InstructorDashboardComponents\LessonManager.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "../api/axios";
 import toast from "react-hot-toast";

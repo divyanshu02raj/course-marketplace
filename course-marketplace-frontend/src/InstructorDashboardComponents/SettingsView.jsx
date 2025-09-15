@@ -1,4 +1,4 @@
-// src/InstructorDashboardComponents/SettingsView.jsx
+// course-marketplace-frontend\src\InstructorDashboardComponents\SettingsView.jsx
 import React, { useState, useEffect } from "react";
 import axios from "../api/axios";
 import baseAxios from "axios";

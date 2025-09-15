@@ -1,4 +1,4 @@
-// src/context/SocketContext.js
+// course-marketplace-frontend\src\context\SocketContext.js
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import { useAuth } from './AuthContext';

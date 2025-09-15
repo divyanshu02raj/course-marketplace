@@ -1,3 +1,4 @@
+//course-marketplace-backend\routes\assessmentRoutes.js
 const express = require('express');
 const router = express.Router();
 const { protect, instructorOnly } = require('../middleware/authMiddleware');
@@ -11,7 +12,7 @@ const {
     uploadMedia,
     getAssessmentForStudent,
     submitAssessment,
-    getAssessmentsForStudentDashboard // New
+    getAssessmentsForStudentDashboard
 } = require('../controllers/assessmentController');
 
 // --- Instructor Routes ---
@@ -22,7 +23,7 @@ router.patch('/questions/:questionId', protect, instructorOnly, updateQuestion);
 router.delete('/questions/:questionId', protect, instructorOnly, deleteQuestion);
 
 // --- Student Routes ---
-router.get('/my-assessments', protect, getAssessmentsForStudentDashboard); // New
+router.get('/my-assessments', protect, getAssessmentsForStudentDashboard);
 router.get('/:assessmentId/take', protect, getAssessmentForStudent);
 router.post('/:assessmentId/submit', protect, submitAssessment);
 

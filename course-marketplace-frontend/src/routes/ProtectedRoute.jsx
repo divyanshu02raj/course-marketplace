@@ -1,4 +1,4 @@
-// src/routes/ProtectedRoute.jsx
+// course-marketplace-frontend\src\routes\ProtectedRoute.jsx
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -21,10 +21,10 @@ export default function ProtectedRoute({ allowedRoles }) {
     }
   }, [user, allowedRoles, navigate]);
 
-  // 👇 Don't show anything while redirecting
+  // Don't show anything while redirecting
   if (!user) return null;
 
-  // 👇 Show message only if user is unauthorized
+  // Show message only if user is unauthorized
   if (showUnauthorized) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">

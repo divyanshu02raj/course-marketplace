@@ -1,19 +1,19 @@
-// controllers/questionController.js
+// course-marketplace-backend\controllers\questionController.js
 const Question = require("../models/Question");
 const Course = require("../models/Course");
 const mongoose = require("mongoose");
 
-// ✅ NEW Function: Get all unanswered questions for an instructor's courses
+// Fetches a list of all unanswered questions for an instructor's dashboard.
 exports.getUnansweredQuestionsForInstructor = async (req, res) => {
     try {
-        // Find all courses taught by the logged-in instructor
+        // First, find all courses taught by the logged-in instructor.
         const instructorCourses = await Course.find({ instructor: req.user._id }).select('_id');
         const courseIds = instructorCourses.map(c => c._id);
 
-        // Find all questions in those courses that have no answers yet
+        // Then, find all questions in those courses that have no answers yet.
         const questions = await Question.find({
             course: { $in: courseIds },
-            answers: { $size: 0 } // Finds docs where 'answers' array is empty
+            answers: { $size: 0 } // Finds documents where the 'answers' array is empty.
         })
         .populate("user", "name profileImage")
         .populate("course", "title")
@@ -27,7 +27,7 @@ exports.getUnansweredQuestionsForInstructor = async (req, res) => {
     }
 };
 
-// Get questions for a specific lesson (private to the student)
+// Gets the Q&A thread for a lesson. Students can only see their own questions.
 exports.getQuestionsForLesson = async (req, res) => {
     try {
         const { lessonId } = req.params;
@@ -35,6 +35,7 @@ exports.getQuestionsForLesson = async (req, res) => {
 
         let query = { lesson: lessonId };
 
+        // An instructor sees all questions, but a student will only see their own.
         if (role === 'student') {
             query.user = userId;
         }
@@ -51,7 +52,6 @@ exports.getQuestionsForLesson = async (req, res) => {
     }
 };
 
-// Ask a new question
 exports.askQuestion = async (req, res) => {
     try {
         const { lessonId } = req.params;
@@ -74,7 +74,6 @@ exports.askQuestion = async (req, res) => {
     }
 };
 
-// Answer a question
 exports.answerQuestion = async (req, res) => {
     try {
         const { questionId } = req.params;
@@ -86,6 +85,7 @@ exports.answerQuestion = async (req, res) => {
             return res.status(404).json({ message: "Question not found." });
         }
 
+        // Only the course instructor is authorized to post an answer.
         if (question.course.instructor.toString() !== userId.toString()) {
             return res.status(403).json({ message: "You are not authorized to answer this question." });
         }

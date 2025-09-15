@@ -1,16 +1,15 @@
-// src/StudentDashboardComponents/CourseDetailsPage.jsx
+// course-marketplace-frontend\src\StudentDashboardComponents\CourseDetailsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Clock, BarChart, Video, CheckCircle, Lock, Bookmark, Target, Star, Users, Sun, Moon,MessageSquare } from 'lucide-react';
+import { ArrowLeft, Clock, BarChart, Video, CheckCircle, Lock, Bookmark, Target, Star, Users, Sun, Moon, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import useTheme from '../hooks/useTheme';
-import { motion, useSpring, useTransform, useScroll } from 'framer-motion';
+import { motion, useSpring, useTransform } from 'framer-motion';
 
 // --- HELPER COMPONENTS ---
 
-// Accordion Item Component for the curriculum
 const AccordionItem = ({ lesson, index }) => {
   return (
     <div className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
@@ -30,7 +29,6 @@ const AccordionItem = ({ lesson, index }) => {
   );
 };
 
-// Animated Number Component
 const AnimatedStat = ({ value }) => {
     const spring = useSpring(0, { mass: 0.8, stiffness: 75, damping: 15 });
     useEffect(() => {
@@ -40,7 +38,6 @@ const AnimatedStat = ({ value }) => {
     return <motion.span>{display}</motion.span>;
 };
 
-// Star Rating Component
 const StarRating = ({ rating, size = 16 }) => {
     return (
         <div className="flex items-center">
@@ -51,7 +48,6 @@ const StarRating = ({ rating, size = 16 }) => {
     );
 };
 
-// Rating Breakdown Component
 const RatingBreakdown = ({ reviews }) => {
     const ratingCounts = [0, 0, 0, 0, 0];
     reviews.forEach(r => {
@@ -69,7 +65,6 @@ const RatingBreakdown = ({ reviews }) => {
                 const percentage = (count / total) * 100;
                 return (
                     <div key={rating} className="flex items-center gap-3 text-sm">
-                        {/* ✅ FIX: Added fixed width and shrink-0 to prevent wrapping */}
                         <span className="w-14 flex-shrink-0 text-gray-600 dark:text-gray-400">{rating} star</span>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <motion.div 
@@ -98,9 +93,6 @@ export default function CourseDetailsPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
-
-  const { scrollYProgress } = useScroll();
-  const scale = useTransform(scrollYProgress, [0, 0.2], [1, 1.2]);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -140,8 +132,7 @@ export default function CourseDetailsPage() {
             recipientId: course.instructor._id
         });
         toast.dismiss(toastId);
-        // Navigate to dashboard and pass the conversation ID to open it automatically
-        navigate('/dashboard', { state: { openChatId: res.data._id } });
+        navigate('/dashboard/messages', { state: { openChatId: res.data._id } });
     } catch (error) {
         toast.error("Could not start conversation.", { id: toastId });
     }
@@ -201,27 +192,27 @@ export default function CourseDetailsPage() {
   }
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
-        <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+    <div className="bg-gray-100 dark:bg-gray-950 min-h-screen">
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-                <div className="flex items-center">
+                <Link to="/">
                     <img
                         src={theme === "dark" ? "/full noBgColor.png" : "/full noBgBlack.png"}
                         alt="SharedSlate Logo"
                         className="h-10 object-contain"
                     />
-                </div>
+                </Link>
                 <div className="flex items-center gap-4">
-                    <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
                         {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-blue-600" />}
                     </button>
                     {user ? (
-                        <div className="flex items-center gap-3">
+                        <Link to="/dashboard" className="flex items-center gap-3">
                             <span className="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-200">
                                 Welcome, {user.name}
                             </span>
                             <img src={user.profileImage || `https://placehold.co/40x40/a5b4fc/1e1b4b?text=${user.name.charAt(0)}`} alt="Profile" className="w-8 h-8 rounded-full object-cover"/>
-                        </div>
+                        </Link>
                     ) : (
                         <Link to="/login" className="text-sm font-semibold text-indigo-600 hover:underline">Login</Link>
                     )}
@@ -229,69 +220,75 @@ export default function CourseDetailsPage() {
             </div>
         </header>
 
-        {/* Parallax Header */}
-        <div className="h-[40vh] relative overflow-hidden">
-            <motion.img 
-                src={course.thumbnail} 
-                alt={course.title}
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ scale }}
-            />
-            <div className="absolute inset-0 bg-black/50"></div>
-        </div>
-
-        <div className="container mx-auto px-4 -mt-32 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-                {/* Main Content */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+        <main>
+            {/* Redesigned Hero Section */}
+            <div className="bg-white dark:bg-gray-900">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                    <div className="max-w-4xl">
                         <Link to="/dashboard/courses" className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-6 font-semibold">
                             <ArrowLeft size={16} />
                             Back to Courses
                         </Link>
-                        <h1 className="text-4xl lg:text-5xl font-bold text-gray-800 dark:text-white mb-3">{course.title}</h1>
-                        <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{course.shortDesc}</p>
-                        <div className="flex items-center gap-4 mb-6">
-                            <StarRating rating={course.averageRating} size={20} />
-                            <span className="text-gray-500 dark:text-gray-400">({course.numReviews} ratings)</span>
+                        <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">{course.title}</h1>
+                        <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">{course.shortDesc}</p>
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+                            <div className="flex items-center gap-2">
+                                <img src={course.instructor.profileImage || `https://i.pravatar.cc/40?u=${course.instructor.name}`} alt={course.instructor.name} className="w-8 h-8 rounded-full" />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Created by {course.instructor.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <StarRating rating={course.averageRating} size={20} />
+                                <span className="text-sm text-gray-500 dark:text-gray-400">({course.numReviews} ratings)</span>
+                            </div>
                             <button onClick={handleStartConversation} className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:underline">
-                    <MessageSquare size={16} /> Message Instructor
-                </button>
+                                <MessageSquare size={16} /> Message Instructor
+                            </button>
                         </div>
                     </div>
-
-                    <div className="mt-8 space-y-8">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-                            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">What you'll learn</h2>
-                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-gray-700 dark:text-gray-300">
-                                {course.whatYouWillLearn?.map((item, i) => (
-                                <li key={i} className="flex items-start gap-3">
-                                    <CheckCircle size={18} className="text-green-500 mt-1 flex-shrink-0"/> <span>{item}</span>
-                                </li>
-                                ))}
-                            </ul>
+                </div>
+            </div>
+            
+            {/* Main Content Area */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+                    {/* Left Column */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
+                            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Course Overview</h2>
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-3">What you'll learn</h3>
+                                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-gray-700 dark:text-gray-300">
+                                        {course.whatYouWillLearn?.map((item, i) => (
+                                            <li key={i} className="flex items-start gap-3"><CheckCircle size={18} className="text-green-500 mt-1 flex-shrink-0"/> <span>{item}</span></li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-3">Requirements</h3>
+                                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
+                                        {course.requirements?.map((req, i) => <li key={i}>{req}</li>)}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
+
                         <div>
-                            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white px-8">Course Curriculum</h2>
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Course Curriculum</h2>
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                                 {lessons.map((lesson, index) => <AccordionItem key={lesson._id} lesson={lesson} index={index} />)}
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-                            <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Requirements</h3>
-                            <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
-                                {course.requirements?.map((req, i) => <li key={i}>{req}</li>)}
-                            </ul>
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
                             <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Student Feedback</h2>
-                            <div className="flex items-center gap-8 mb-6">
-                                <div className="text-center">
+                            <div className="flex flex-col sm:flex-row items-center gap-8 mb-6">
+                                <div className="text-center flex-shrink-0">
                                     <p className="text-5xl font-bold text-yellow-400">{course.averageRating.toFixed(1)}</p>
-                                    <StarRating rating={course.averageRating} size={20} />
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Average Rating</p>
+                                    <StarRating rating={course.averageRating} size={24} />
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Average Rating</p>
                                 </div>
-                                <div className="flex-grow">
+                                <div className="flex-grow w-full">
                                     <RatingBreakdown reviews={reviews} />
                                 </div>
                             </div>
@@ -307,41 +304,42 @@ export default function CourseDetailsPage() {
                                         </div>
                                         <p className="text-gray-700 dark:text-gray-300 italic">"{review.comment}"</p>
                                     </div>
-                                )) : <p className="text-gray-500 dark:text-gray-400">No reviews yet for this course.</p>}
+                                )) : <p className="text-center text-gray-500 dark:text-gray-400 py-8">No reviews yet for this course.</p>}
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Sticky Sidebar Card */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-24">
-                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
-                            <div className="p-6">
-                                <p className="text-4xl font-bold text-gray-800 dark:text-white mb-4">₹{course.price}</p>
-                                {isEnrolled ? (
-                                    <Link to={`/learn/${course._id}`} className="w-full block text-center py-3 px-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">
-                                    Go to Course
-                                    </Link>
-                                ) : (
-                                    <button onClick={handleEnroll} className="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">
-                                    Enroll Now
+                    {/* Right Column (Sticky Sidebar) */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-24">
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
+                                <img src={course.thumbnail} alt={course.title} className="w-full h-48 object-cover"/>
+                                <div className="p-6">
+                                    <p className="text-4xl font-bold text-gray-800 dark:text-white mb-4">₹{course.price}</p>
+                                    {isEnrolled ? (
+                                        <Link to={`/learn/${course._id}`} className="w-full block text-center py-3 px-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">
+                                        Go to Course
+                                        </Link>
+                                    ) : (
+                                        <button onClick={handleEnroll} className="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">
+                                        Enroll Now
+                                        </button>
+                                    )}
+                                    <button className="w-full mt-3 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2">
+                                        <Bookmark size={16} /> Add to Wishlist
                                     </button>
-                                )}
-                                <button className="w-full mt-3 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2">
-                                    <Bookmark size={16} /> Add to Wishlist
-                                </button>
-                                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-3 mt-6">
-                                    <li className="flex items-center gap-3"><Video size={16} /> <span><AnimatedStat value={lessons.length} /> Lessons</span></li>
-                                    <li className="flex items-center gap-3"><Clock size={16} /> <span><AnimatedStat value={lessons.reduce((acc, l) => acc + (l.duration || 0), 0)} /> Mins of Video</span></li>
-                                    <li className="flex items-center gap-3"><Target size={16} /> <span>For {course.targetAudience || 'All Levels'}</span></li>
-                                </ul>
+                                    <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-3 mt-6">
+                                        <li className="flex items-center gap-3"><Video size={16} /> <span><AnimatedStat value={lessons.length} /> Lessons</span></li>
+                                        <li className="flex items-center gap-3"><Clock size={16} /> <span><AnimatedStat value={lessons.reduce((acc, l) => acc + (l.duration || 0), 0)} /> Mins of Video</span></li>
+                                        <li className="flex items-center gap-3"><Target size={16} /> <span>For {course.targetAudience || 'All Levels'}</span></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// models/Course.js
+// course-marketplace-backend\models\Course.js
 const mongoose = require("mongoose");
 
 const CourseSchema = new mongoose.Schema({
@@ -29,6 +29,7 @@ const CourseSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  // Controls the visibility and availability of the course.
   status: {
     type: String,
     enum: ["draft", "published", "unpublished"],
@@ -51,7 +52,8 @@ const CourseSchema = new mongoose.Schema({
     ref: "User",
   }],
   
-  // ✅ NEW Fields for ratings and reviews
+  // These fields are denormalized and updated by the reviewController.
+  // Storing them here prevents costly aggregation queries when displaying course lists.
   averageRating: {
     type: Number,
     default: 0,
@@ -60,6 +62,6 @@ const CourseSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-}, { timestamps: true }); // Using timestamps will automatically add createdAt and updatedAt fields
+}, { timestamps: true });
 
 module.exports = mongoose.model("Course", CourseSchema);

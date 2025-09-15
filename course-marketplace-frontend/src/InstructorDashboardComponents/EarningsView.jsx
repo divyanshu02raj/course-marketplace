@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\InstructorDashboardComponents\EarningsView.jsx
 import React, { useState, useEffect } from "react";
 import axios from "../api/axios";
 import toast from "react-hot-toast";
@@ -47,7 +48,7 @@ export default function EarningsView() {
   const stats = [
     {
       label: "Net Earnings",
-      value: formatCurrency(earningsData.netEarnings),
+      value: formatCurrency(earningsData.totalRevenue),
       icon: <DollarSign className="w-6 h-6" />,
       color: "text-indigo-500",
     },

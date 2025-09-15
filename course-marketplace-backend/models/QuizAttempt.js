@@ -1,4 +1,4 @@
-// NEW FILE: models/QuizAttempt.js
+// course-marketplace-backend\models\QuizAttempt.js
 const mongoose = require("mongoose");
 
 const QuizAttemptSchema = new mongoose.Schema({
@@ -20,6 +20,7 @@ const QuizAttemptSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    // Stores a detailed record of each answer for post-quiz review by the student.
     answers: [{
         question: { type: mongoose.Schema.Types.ObjectId, ref: 'QuizQuestion' },
         selectedAnswer: String,
@@ -27,6 +28,6 @@ const QuizAttemptSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
-// A user can attempt a quiz multiple times, so no unique index here.
+// A user can attempt a quiz multiple times, so there is no unique index on user and quiz.
 
 module.exports = mongoose.model("QuizAttempt", QuizAttemptSchema);

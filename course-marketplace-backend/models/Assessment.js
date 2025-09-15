@@ -1,3 +1,4 @@
+// course-marketplace-backend\models\Assessment.js
 const mongoose = require('mongoose');
 
 const assessmentSchema = new mongoose.Schema({
@@ -5,7 +6,8 @@ const assessmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course',
     required: true,
-    unique: true, // Typically, a course has only one final assessment
+    // This ensures that each course can only have one final assessment.
+    unique: true, 
   },
   title: {
     type: String,
@@ -16,12 +18,13 @@ const assessmentSchema = new mongoose.Schema({
   questions: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'AssessmentQuestion', // References the new, powerful question model
+      ref: 'AssessmentQuestion',
     },
   ],
   passingScore: {
     type: Number,
-    default: 75, // The percentage required to pass (e.g., 75%)
+    // The percentage (e.g., 75%) a student must achieve to pass the assessment.
+    default: 75,
     min: 0,
     max: 100,
   },

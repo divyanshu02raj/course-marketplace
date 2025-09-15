@@ -1,30 +1,7 @@
-// src/pages/Landing.jsx
+// course-marketplace-frontend\src\pages\Landing.jsx
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { GraduationCap, Video, Star, Users } from "lucide-react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-
-const testimonials = [
-  {
-    name: "Emily Tran",
-    quote:
-      "SharedSlate made it so easy to switch careers. The quality of the instructors is top-notch!",
-    avatar: "https://i.pravatar.cc/100?img=5",
-  },
-  {
-    name: "Ahmed Khan",
-    quote:
-      "As an instructor, I love how simple it is to publish and manage my content here.",
-    avatar: "https://i.pravatar.cc/100?img=12",
-  },
-  {
-    name: "Sara Liu",
-    quote:
-      "I’ve learned more in 3 months here than a year elsewhere. Love the community!",
-    avatar: "https://i.pravatar.cc/100?img=8",
-  },
-];
 
 export default function Landing() {
   return (
@@ -42,15 +19,12 @@ export default function Landing() {
       />
 
       {/* Header */}
-     <header className="absolute top-0 left-0 w-full px-8 py-6 flex justify-between items-center z-20">
-  {/* New Logo Image */}
-    <img src="full noBgColor.png" alt="SharedSlate Logo" className="w-32 h-auto" />
-
-  <Link to="/login" className="text-indigo-400 hover:underline font-medium transition hover:text-indigo-300">
-    Login
-  </Link>
-</header>
-
+      <header className="absolute top-0 left-0 w-full px-8 py-6 flex justify-between items-center z-20">
+        <img src="full noBgColor.png" alt="SharedSlate Logo" className="w-32 h-auto" />
+        <Link to="/login" className="text-indigo-400 hover:underline font-medium transition hover:text-indigo-300">
+          Login
+        </Link>
+      </header>
 
       {/* Hero */}
       <main className="pt-40 pb-32 px-6 md:px-20 relative z-10">
@@ -97,46 +71,10 @@ export default function Landing() {
       <section className="py-24 px-6 md:px-20 relative z-10">
         <h2 className="text-3xl font-bold text-center text-indigo-300 mb-16">Why Choose SharedSlate?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 max-w-6xl mx-auto">
-          <Feature icon={<GraduationCap />} title="Learn Anything" desc="Thousands of courses from top instructors." />
-          <Feature icon={<Video />} title="Video Lessons" desc="Stream high-quality video content anytime." />
-          <Feature icon={<Users />} title="Join the Community" desc="Collaborate and grow with peers and teachers." />
-          <Feature icon={<Star />} title="Earn Certificates" desc="Get recognized for your achievements." />
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-20 bg-indigo-950 bg-opacity-20 backdrop-blur-md relative z-10">
-        <h2 className="text-3xl font-bold text-center text-indigo-300 mb-12">What our users say</h2>
-        <Swiper spaceBetween={30} slidesPerView={1} loop autoplay className="max-w-3xl mx-auto">
-          {testimonials.map((t, idx) => (
-            <SwiperSlide key={idx}>
-              <div className="bg-white/10 border border-white/10 p-6 rounded-xl shadow text-center text-white">
-                <img src={t.avatar} className="w-16 h-16 mx-auto rounded-full mb-4" alt={t.name} />
-                <p className="italic text-indigo-200 mb-3">"{t.quote}"</p>
-                <h4 className="font-semibold text-indigo-300">{t.name}</h4>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </section>
-
-      {/* Featured Courses */}
-      <section className="py-20 bg-black/20 backdrop-blur-sm">
-        <h2 className="text-3xl font-bold text-center text-indigo-300 mb-12">Popular Courses</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 px-6 max-w-6xl mx-auto">
-          {["Full Stack Web Dev", "UI/UX Design", "AI for Beginners"].map((title, idx) => (
-            <motion.div
-              key={idx}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white/5 border border-white/10 p-6 rounded-xl shadow"
-            >
-              <h3 className="text-xl font-bold text-indigo-300 mb-2">{title}</h3>
-              <p className="text-sm text-gray-300 mb-4">Learn the skills that top companies demand today.</p>
-              <Link to="/register" className="text-indigo-400 font-semibold hover:underline">
-                Enroll now →
-              </Link>
-            </motion.div>
-          ))}
+          <Feature icon={<GraduationCap size={32} />} title="Learn Anything" desc="Thousands of courses from top instructors." />
+          <Feature icon={<Video size={32} />} title="Video Lessons" desc="Stream high-quality video content anytime." />
+          <Feature icon={<Users size={32} />} title="Join the Community" desc="Collaborate and grow with peers and teachers." />
+          <Feature icon={<Star size={32} />} title="Earn Certificates" desc="Get recognized for your achievements." />
         </div>
       </section>
 
@@ -158,7 +96,7 @@ function Feature({ icon, title, desc }) {
       whileHover={{ scale: 1.05 }}
       className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl text-center transition-transform"
     >
-      <div className="text-indigo-400 mb-3">{icon}</div>
+      <div className="text-indigo-400 mb-4 inline-block">{icon}</div>
       <h3 className="font-semibold text-lg text-white mb-1">{title}</h3>
       <p className="text-sm text-gray-400">{desc}</p>
     </motion.div>

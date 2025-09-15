@@ -1,3 +1,4 @@
+// course-marketplace-backend\routes\earningsRoutes.js
 const express = require("express");
 const router = express.Router();
 const { protect, instructorOnly } = require("../middleware/authMiddleware");
@@ -7,7 +8,7 @@ const {
     getInstructorEarnings,
     getInstructorStats,
     getPerformanceChartData,
-    getDashboardSummary // Import the new function
+    getDashboardSummary
 } = require("../controllers/earningsController");
 
 // --- Earnings Routes ---

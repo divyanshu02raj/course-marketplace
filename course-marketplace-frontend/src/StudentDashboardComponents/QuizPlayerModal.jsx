@@ -1,4 +1,4 @@
-// src/StudentDashboardComponents/QuizPlayerModal.jsx
+// course-marketplace-frontend\src\StudentDashboardComponents\QuizPlayerModal.jsx
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';

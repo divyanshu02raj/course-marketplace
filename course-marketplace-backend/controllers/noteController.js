@@ -1,7 +1,7 @@
-// controllers/noteController.js
+// course-marketplace-backend\controllers\noteController.js
 const Note = require("../models/Note");
 
-// Get or create a note for a lesson for the logged-in user
+// Fetches a student's note for a specific lesson. If one doesn't exist, it creates an empty one.
 exports.getNoteForLesson = async (req, res) => {
     try {
         let note = await Note.findOne({
@@ -9,6 +9,7 @@ exports.getNoteForLesson = async (req, res) => {
             lesson: req.params.lessonId,
         });
 
+        // This ensures the frontend always receives a note object to work with.
         if (!note) {
             note = new Note({
                 user: req.user._id,
@@ -25,14 +26,14 @@ exports.getNoteForLesson = async (req, res) => {
     }
 };
 
-// Save a note's content
+// Saves or updates a student's note for a lesson.
 exports.saveNote = async (req, res) => {
     try {
-        const { content, courseId } = req.body; // Get courseId from the request body
+        const { content, courseId } = req.body;
         
-        // Find the note for the current user and lesson, and update its content.
-        // The 'upsert: true' option will create the document if it doesn't exist.
-        // We use $setOnInsert to make sure the required fields are set on creation.
+        // Use an atomic 'upsert' operation to find and update a note, or create it if it doesn't exist.
+        // - $set: updates the content on every save.
+        // - $setOnInsert: sets the core fields only when the document is first created.
         const note = await Note.findOneAndUpdate(
             { user: req.user._id, lesson: req.params.lessonId },
             { 

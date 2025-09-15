@@ -1,16 +1,16 @@
-// controllers/paymentController.js
+// course-marketplace-backend\controllers\paymentController.js
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
-const Transaction = require('../models/Transaction'); // 1. Import the Transaction model
+const Transaction = require('../models/Transaction');
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Create a Razorpay Order
+// Creates a payment order on the Razorpay servers.
 exports.createRazorpayOrder = async (req, res) => {
     const { courseId } = req.body;
     const userId = req.user._id;
@@ -23,12 +23,15 @@ exports.createRazorpayOrder = async (req, res) => {
         if (typeof course.price !== 'number' || course.price <= 0) {
             return res.status(400).json({ message: "This course cannot be purchased." });
         }
+        
+        // Prevent users from purchasing a course they are already enrolled in.
         const existingEnrollment = await Enrollment.findOne({ user: userId, course: courseId });
         if (existingEnrollment) {
             return res.status(400).json({ message: "You are already enrolled in this course." });
         }
 
         const options = {
+            // Razorpay expects the amount in the smallest currency unit (e.g., paise for INR).
             amount: Math.round(course.price * 100),
             currency: "INR",
             receipt: `rcpt_${courseId.toString().slice(-8)}_${Date.now()}`,
@@ -43,7 +46,7 @@ exports.createRazorpayOrder = async (req, res) => {
     }
 };
 
-// Verify the Payment, Enroll the User, and Create a Transaction
+// Verifies a payment's authenticity and, if successful, enrolls the user in the course.
 exports.verifyRazorpayPayment = async (req, res) => {
     const { courseId } = req.params;
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -52,26 +55,27 @@ exports.verifyRazorpayPayment = async (req, res) => {
     try {
         const body = razorpay_order_id + "|" + razorpay_payment_id;
 
+        // This is the critical security step: we recreate the signature on the server
+        // using our secret key and compare it to the one sent by the client.
         const expectedSignature = crypto
             .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
             .update(body.toString())
             .digest('hex');
 
         if (expectedSignature === razorpay_signature) {
-            // Payment is authentic.
+            // Payment is authentic. Now, we provision access to the course.
             const course = await Course.findById(courseId);
             if (!course) return res.status(404).json({ message: "Course not found." });
 
-            // 2. Create the enrollment
             const enrollment = new Enrollment({ user: userId, course: courseId });
             await enrollment.save();
 
             await Course.findByIdAndUpdate(courseId, { $addToSet: { enrolledStudents: userId } });
 
-            // ✅ 3. FIX: Create the transaction record to track the sale for the instructor
+            // Create a transaction record for instructor earnings and our own bookkeeping.
             const transaction = new Transaction({
                 student: userId,
-                instructor: course.instructor, // The ID of the instructor who owns the course
+                instructor: course.instructor,
                 course: courseId,
                 amount: course.price,
                 paymentId: razorpay_payment_id,

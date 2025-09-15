@@ -1,4 +1,4 @@
-// course-marketplace-frontend/src/InstructorDashboardComponents/MessagesView.jsx
+// course-marketplace-frontend\src\InstructorDashboardComponents\MessagesView.jsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "../api/axios";
 import toast from "react-hot-toast";

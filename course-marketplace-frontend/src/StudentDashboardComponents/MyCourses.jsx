@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\StudentDashboardComponents\MyCourses.jsx
 import React from "react";
 import { User, PlayCircle } from "lucide-react";
 import { Link } from "react-router-dom";

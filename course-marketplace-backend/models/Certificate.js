@@ -1,4 +1,4 @@
-// models/Certificate.js
+// course-marketplace-backend\models\Certificate.js
 const mongoose = require("mongoose");
 
 const CertificateSchema = new mongoose.Schema({
@@ -16,7 +16,8 @@ const CertificateSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  // A unique ID for the certificate, can be used for verification pages later
+  // A public-facing, unique identifier (e.g., a UUID) for the certificate.
+  // This is used in the URL for the public verification page.
   certificateId: {
     type: String,
     required: true,

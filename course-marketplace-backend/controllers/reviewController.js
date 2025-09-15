@@ -1,28 +1,27 @@
-// controllers/reviewController.js
+// course-marketplace-backend\controllers\reviewController.js
 const Review = require('../models/Review');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 
-// Create a new review for a course
+// Creates a new student review and updates the course's average rating.
 exports.createReview = async (req, res) => {
     const { courseId } = req.params;
     const { rating, comment } = req.body;
     const userId = req.user._id;
 
     try {
-        // 1. Check if the user is enrolled in the course
+        // A student must be enrolled in a course to be eligible to review it.
         const isEnrolled = await Enrollment.findOne({ user: userId, course: courseId });
         if (!isEnrolled) {
             return res.status(403).json({ message: "You must be enrolled in a course to review it." });
         }
 
-        // 2. Check if the user has already reviewed this course
+        // Prevent a user from submitting more than one review for the same course.
         const existingReview = await Review.findOne({ user: userId, course: courseId });
         if (existingReview) {
             return res.status(400).json({ message: "You have already reviewed this course." });
         }
 
-        // 3. Create the new review
         const review = new Review({
             user: userId,
             course: courseId,
@@ -31,7 +30,8 @@ exports.createReview = async (req, res) => {
         });
         await review.save();
 
-        // 4. Update the course with the new average rating
+        // After adding the new review, recalculate the course's average rating and review count.
+        // This denormalizes the data for efficient display on course listing pages.
         const course = await Course.findById(courseId);
         const reviews = await Review.find({ course: courseId });
         
@@ -47,7 +47,6 @@ exports.createReview = async (req, res) => {
     }
 };
 
-// Get all reviews for a specific course
 exports.getReviewsForCourse = async (req, res) => {
     try {
         const { courseId } = req.params;

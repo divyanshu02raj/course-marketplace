@@ -1,4 +1,4 @@
-// routes/authRoutes.js
+// course-marketplace-backend\routes\authRoutes.js
 const express = require("express");
 const router = express.Router();
 const {
@@ -8,7 +8,7 @@ const {
   logout,
   updateUser,
   updatePassword,
-  googleLogin, // ✅ Ensure this is imported from your controller
+  googleLogin,
 } = require("../controllers/authController");
 
 const { protect } = require("../middleware/authMiddleware"); 
@@ -23,7 +23,7 @@ router.get("/me", protect, getMe);
 router.patch("/update", protect, updateUser);
 router.patch("/update-password", protect, updatePassword);
 
-// New Google Login Route
+// Google Login Route
 router.post("/google-login", googleLogin);
 
 module.exports = router;

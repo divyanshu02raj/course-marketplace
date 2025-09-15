@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\pages\InstructorDashboard.jsx
 import { useState } from "react";
 import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import {
@@ -8,7 +9,6 @@ import {
   MessageSquare,
   Settings,
   LogOut,
-  Bell,
   Menu,
   X,
   Sun,
@@ -30,13 +30,6 @@ export default function InstructorDashboard() {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-
-  const [notifications, setNotifications] = useState([
-    { title: "New course approval", time: "5 min ago", read: false },
-    { title: "Student feedback received", time: "1 hour ago", read: false },
-    { title: "Payment received for your course", time: "2 hours ago", read: true },
-  ]);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -67,8 +60,6 @@ export default function InstructorDashboard() {
     { label: "Messages", icon: <MessageSquare />, path: "messages" },
     { label: "Settings", icon: <Settings />, path: "settings" },
   ];
-
-  const unreadCount = notifications.filter((note) => !note.read).length;
 
   return (
     <div className="h-screen flex overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-white">
@@ -144,24 +135,6 @@ export default function InstructorDashboard() {
           </div>
 
           <div className="flex items-center gap-6">
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2"
-              >
-                <Bell className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white w-6 h-6" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute top-full left-1/2 -translate-x-[60%] mt-2 w-[90vw] max-w-xs bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 sm:left-auto sm:right-0 sm:translate-x-0 sm:w-80">
-                  {/* Notification content... */}
-                </div>
-              )}
-            </div>
-
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
@@ -195,3 +168,4 @@ export default function InstructorDashboard() {
     </div>
   );
 }
+

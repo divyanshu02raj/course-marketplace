@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\StudentDashboardComponents\DashboardView.jsx
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
@@ -108,7 +109,8 @@ export default function DashboardView() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                        Certificate Earned: <span className="font-bold">{cert.course.title}</span>
+                                        {/* ** THE FIX IS HERE ** */}
+                                        Certificate Earned: <span className="font-bold">{cert.course?.title || 'Deleted Course'}</span>
                                     </p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                         Issued on {new Date(cert.issueDate).toLocaleDateString()}

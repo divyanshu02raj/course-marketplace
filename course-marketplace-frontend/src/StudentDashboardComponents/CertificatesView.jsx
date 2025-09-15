@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\StudentDashboardComponents\CertificatesView.jsx
 import React, { useState } from "react";
 import { Download, Eye, Award, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

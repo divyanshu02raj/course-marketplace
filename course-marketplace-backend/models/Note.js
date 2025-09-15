@@ -1,4 +1,4 @@
-// models/Note.js
+// course-marketplace-backend\models\Note.js
 const mongoose = require("mongoose");
 
 const NoteSchema = new mongoose.Schema({
@@ -7,6 +7,8 @@ const NoteSchema = new mongoose.Schema({
     ref: "User", 
     required: true 
   },
+  // Storing the course ID here (in addition to the lesson) simplifies queries,
+  // e.g., finding all of a user's notes for a particular course.
   course: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "Course", 
@@ -23,7 +25,7 @@ const NoteSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// Create a compound index to ensure a user has only one note per lesson
+// This unique index ensures that a user can have only one note document per lesson.
 NoteSchema.index({ user: 1, lesson: 1 }, { unique: true });
 
 module.exports = mongoose.model("Note", NoteSchema);

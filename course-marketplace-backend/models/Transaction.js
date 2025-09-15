@@ -1,4 +1,4 @@
-// models/Transaction.js
+// course-marketplace-backend\models\Transaction.js
 const mongoose = require("mongoose");
 
 const TransactionSchema = new mongoose.Schema({
@@ -21,7 +21,7 @@ const TransactionSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  // To store the payment ID from Razorpay for reference
+  // Stores the unique identifier from the payment gateway (Razorpay).
   paymentId: {
     type: String,
     required: true,

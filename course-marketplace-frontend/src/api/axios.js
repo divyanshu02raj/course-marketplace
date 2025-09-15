@@ -1,5 +1,4 @@
-
-// src/api/axios.js
+// course-marketplace-frontend\src\api\axios.js
 import axios from 'axios';
 import { API_BASE_URL } from "../config";
 
@@ -10,4 +9,3 @@ const instance = axios.create({
 
 
 export default instance;
-// URL for render 'https://course-marketplace-backend.onrender.com/api' //for local 'http://localhost:5000/api'

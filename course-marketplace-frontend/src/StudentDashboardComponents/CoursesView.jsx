@@ -1,4 +1,4 @@
-// StudentDashboardComponents/CoursesView.jsx
+// course-marketplace-frontend\src\StudentDashboardComponents\CoursesView.jsx
 import React, { useState } from "react";
 import { User } from "lucide-react";
 import { Link } from "react-router-dom";

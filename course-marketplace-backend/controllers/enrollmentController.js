@@ -1,14 +1,16 @@
+//course-marketplace-backend\controllers\enrollmentController.js
 const Enrollment = require('../models/Enrollment');
 const Lesson = require('../models/Lesson');
 const Course = require('../models/Course');
 const Certificate = require('../models/Certificate');
 
-// Get a user's progress for a specific course
 exports.getEnrollmentProgress = async (req, res) => {
     try {
         const { courseId } = req.params;
         const userId = req.user._id;
         const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
+        
+        // If no enrollment exists, it simply means the user has not completed any lessons yet.
         if (!enrollment) {
             return res.json({ completedLessons: [] });
         }
@@ -18,7 +20,7 @@ exports.getEnrollmentProgress = async (req, res) => {
     }
 };
 
-// Mark a lesson as complete for a user
+// Updates a student's progress when they complete a lesson.
 exports.markLessonAsComplete = async (req, res) => {
     try {
         const { courseId, lessonId } = req.params;
@@ -26,14 +28,17 @@ exports.markLessonAsComplete = async (req, res) => {
 
         let enrollment = await Enrollment.findOne({ user: userId, course: courseId });
 
+        // If this is the first lesson the user completes, create the enrollment document.
         if (!enrollment) {
             enrollment = new Enrollment({ user: userId, course: courseId });
         }
 
+        // Add the lesson to the completed list if it's not already there.
         if (!enrollment.completedLessons.includes(lessonId)) {
             enrollment.completedLessons.push(lessonId);
         }
         
+        // Recalculate the overall course progress percentage.
         const totalLessonsInCourse = await Lesson.countDocuments({ course: courseId });
         if (totalLessonsInCourse > 0) {
             enrollment.progress = (enrollment.completedLessons.length / totalLessonsInCourse) * 100;
@@ -41,9 +46,8 @@ exports.markLessonAsComplete = async (req, res) => {
 
         await enrollment.save();
 
-        // ** THE FIX IS HERE **
-        // The old logic that automatically created a certificate has been removed.
-        // This is now correctly handled in the assessmentController after a student passes.
+        // Note: Certificate generation is intentionally handled in the assessmentController after a 
+        // student passes the final assessment, not upon 100% lesson completion.
 
         res.status(200).json({ message: "Lesson marked as complete.", completedLessons: enrollment.completedLessons });
 
@@ -53,12 +57,13 @@ exports.markLessonAsComplete = async (req, res) => {
     }
 };
 
-// Get all students enrolled in a specific course
+// For an instructor, gets a list of all students enrolled in one of their courses.
 exports.getEnrolledStudentsForCourse = async (req, res) => {
     try {
         const { courseId } = req.params;
         const userId = req.user._id;
 
+        // Authorize that the requester is the course instructor.
         const course = await Course.findById(courseId);
         if (!course || course.instructor.toString() !== userId.toString()) {
             return res.status(403).json({ message: "You are not authorized to view this course's enrollments." });

@@ -1,4 +1,4 @@
-// src/InstructorDashboardComponents/QuizEditorModal.jsx
+// course-marketplace-frontend\src\InstructorDashboardComponents\QuizEditorModal.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';

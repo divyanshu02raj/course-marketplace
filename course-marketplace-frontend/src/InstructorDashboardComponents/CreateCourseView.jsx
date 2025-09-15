@@ -1,4 +1,4 @@
-// src/InstructorDashboardComponents/CreateCourseView.jsx
+// course-marketplace-frontend\src\InstructorDashboardComponents\CreateCourseView.jsx
 import { useState } from "react";
 import { Upload, BookOpenCheck } from "lucide-react";
 import axios from "../api/axios";

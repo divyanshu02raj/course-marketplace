@@ -1,4 +1,4 @@
-// routes/quizRoutes.js
+// course-marketplace-backend\routes\quizRoutes.js
 const express = require("express");
 const router = express.Router();
 const { protect, instructorOnly } = require("../middleware/authMiddleware");

@@ -1,3 +1,4 @@
+//course-marketplace-frontend\src\pages\CoursePlayer.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../api/axios';
@@ -52,7 +53,7 @@ const VideoPlayer = ({ src, onComplete }) => {
     useEffect(() => {
         const video = videoRef.current;
         const handleKeyDown = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('.ql-editor')) return;
             if (e.code === 'Space') { e.preventDefault(); handlePlayPause(); }
             if (e.code === 'ArrowRight') handleSkip(10);
             if (e.code === 'ArrowLeft') handleSkip(-10);
@@ -358,374 +359,377 @@ const NotesSection = ({ note, setNote, onSave, isSaving }) => (
 
 
 export default function CoursePlayer() {
-  const { courseId } = useParams();
-  const { user } = useAuth();
-  const [course, setCourse] = useState(null);
-  const [lessons, setLessons] = useState([]);
-  const [currentLesson, setCurrentLesson] = useState(null);
-  const [completedLessons, setCompletedLessons] = useState(new Set());
-  const [loading, setLoading] = useState(true);
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('content');
-  const [summary, setSummary] = useState("");
-  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
-  const [myNote, setMyNote] = useState("");
-  const [isNoteSaving, setIsNoteSaving] = useState(false);
-  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
-  const [quizResults, setQuizResults] = useState(null);
+    const { courseId } = useParams();
+    const { user } = useAuth();
+    const [course, setCourse] = useState(null);
+    const [lessons, setLessons] = useState([]);
+    const [currentLesson, setCurrentLesson] = useState(null);
+    const [completedLessons, setCompletedLessons] = useState(new Set());
+    const [loading, setLoading] = useState(true);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('content');
+    const [summary, setSummary] = useState("");
+    const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+    const [myNote, setMyNote] = useState("");
+    const [isNoteSaving, setIsNoteSaving] = useState(false);
+    const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+    const [quizResults, setQuizResults] = useState(null);
 
-  useEffect(() => {
-    const fetchCourseData = async () => {
-      try {
-        const [courseRes, lessonsRes, progressRes] = await Promise.all([
-          axios.get(`/courses/${courseId}`),
-          axios.get(`/lessons/${courseId}`),
-          axios.get(`/enrollments/${courseId}/progress`)
-        ]);
-        
-        setCourse(courseRes.data);
-        setLessons(lessonsRes.data);
-        setCompletedLessons(new Set(progressRes.data.completedLessons));
-
-        if (lessonsRes.data.length > 0) {
-          setCurrentLesson(lessonsRes.data[0]);
-        }
-      } catch (error) {
-        toast.error('Failed to load course content.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (user) {
-        fetchCourseData();
-    }
-  }, [courseId, user]);
-  
-  useEffect(() => {
-    setSummary("");
-    const fetchNote = async () => {
-        if (currentLesson && user) {
+    useEffect(() => {
+        const fetchCourseData = async () => {
             try {
-                const res = await axios.get(`/notes/${currentLesson._id}?courseId=${courseId}`);
-                setMyNote(res.data.content || "");
+                const [courseRes, lessonsRes, progressRes] = await Promise.all([
+                    axios.get(`/courses/${courseId}`),
+                    axios.get(`/lessons/${courseId}`),
+                    axios.get(`/enrollments/${courseId}/progress`)
+                ]);
+                
+                setCourse(courseRes.data);
+                setLessons(lessonsRes.data);
+                setCompletedLessons(new Set(progressRes.data.completedLessons));
+
+                if (lessonsRes.data.length > 0) {
+                    setCurrentLesson(lessonsRes.data[0]);
+                }
             } catch (error) {
-                console.error("Failed to fetch note", error);
-                setMyNote("");
+                toast.error('Failed to load course content.');
+            } finally {
+                setLoading(false);
             }
+        };
+        if (user) {
+            fetchCourseData();
+        }
+    }, [courseId, user]);
+    
+    useEffect(() => {
+        setSummary("");
+        const fetchNote = async () => {
+            if (currentLesson && user) {
+                try {
+                    const res = await axios.get(`/notes/${currentLesson._id}?courseId=${courseId}`);
+                    setMyNote(res.data.content || "");
+                } catch (error) {
+                    console.error("Failed to fetch note", error);
+                    setMyNote("");
+                }
+            }
+        };
+        fetchNote();
+    }, [currentLesson, user, courseId]);
+
+    const handleSaveNote = async () => {
+        if (!currentLesson || !user) return;
+        setIsNoteSaving(true);
+        const toastId = toast.loading("Saving your note...");
+        try {
+            await axios.post(`/notes/${currentLesson._id}`, { 
+                content: myNote,
+                courseId: courseId 
+            });
+            toast.success("Note saved successfully!", { id: toastId });
+        } catch (error) {
+            console.error("Failed to save note", error);
+            toast.error("Could not save your note.", { id: toastId });
+        } finally {
+            setIsNoteSaving(false);
         }
     };
-    fetchNote();
-  }, [currentLesson, user, courseId]);
 
-  const handleSaveNote = async () => {
-    if (!currentLesson || !user) return;
-    setIsNoteSaving(true);
-    const toastId = toast.loading("Saving your note...");
-    try {
-        await axios.post(`/notes/${currentLesson._id}`, { 
-            content: myNote,
-            courseId: courseId 
-        });
-        toast.success("Note saved successfully!", { id: toastId });
-    } catch (error) {
-        console.error("Failed to save note", error);
-        toast.error("Could not save your note.", { id: toastId });
-    } finally {
-        setIsNoteSaving(false);
-    }
-  };
+    const handleSetCurrentLesson = (lesson) => {
+        setCurrentLesson(lesson);
+        setQuizResults(null);
+        window.scrollTo(0, 0);
+    };
 
-  const handleSetCurrentLesson = (lesson) => {
-    setCurrentLesson(lesson);
-    setQuizResults(null);
-    window.scrollTo(0, 0);
-  };
+    const handleMarkAsComplete = async () => {
+        if (!currentLesson || completedLessons.has(currentLesson._id)) return;
 
-  const handleMarkAsComplete = async () => {
-    if (!currentLesson || completedLessons.has(currentLesson._id)) return;
+        const originalCompleted = new Set(completedLessons);
+        const newCompleted = new Set(completedLessons);
+        newCompleted.add(currentLesson._id);
+        setCompletedLessons(newCompleted);
 
-    const originalCompleted = new Set(completedLessons);
-    const newCompleted = new Set(completedLessons);
-    newCompleted.add(currentLesson._id);
-    setCompletedLessons(newCompleted);
+        try {
+            await axios.post(`/enrollments/${courseId}/lessons/${currentLesson._id}/complete`);
 
-    try {
-        await axios.post(`/enrollments/${courseId}/lessons/${currentLesson._id}/complete`);
-
-        const currentIndex = lessons.findIndex(l => l._id === currentLesson._id);
-        const nextLesson = lessons[currentIndex + 1];
-        
-        if (nextLesson) {
-            setCurrentLesson(nextLesson);
-        } else {
-            toast.success("Congratulations! You've completed all the lessons!");
+            const currentIndex = lessons.findIndex(l => l._id === currentLesson._id);
+            const nextLesson = lessons[currentIndex + 1];
+            
+            if (nextLesson) {
+                setCurrentLesson(nextLesson);
+            } else {
+                toast.success("Congratulations! You've completed all the lessons!");
+                setIsReviewModalOpen(true); // Open review modal on course completion
+            }
+        } catch (error) {
+            toast.error("Couldn't save progress. Please try again.");
+            setCompletedLessons(originalCompleted);
         }
-    } catch (error) {
-        toast.error("Couldn't save progress. Please try again.");
-        setCompletedLessons(originalCompleted);
+    };
+
+    const handleVideoEnd = () => {
+        if (currentLesson && !currentLesson.hasQuiz) {
+          handleMarkAsComplete();
+        }
+    };
+
+    const handleGetSummary = async () => {
+        const lessonContent = currentLesson?.content;
+        if (!lessonContent || lessonContent.trim().length < 50) {
+          return toast.error("This lesson doesn't have enough content to summarize.");
+        }
+        
+        setIsSummaryLoading(true);
+        setSummary("");
+        const toastId = toast.loading("Generating AI summary...");
+    
+        try {
+            const res = await axios.post('/ai/summarize', { content: lessonContent });
+            setSummary(res.data.summary);
+            toast.success("Summary generated!", { id: toastId });
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || "Could not generate summary.";
+            toast.error(errorMessage, { id: toastId });
+            console.error("AI Summary Error:", error);
+        } finally {
+            setIsSummaryLoading(false);
+        }
+    };
+
+    const handleQuizComplete = (results) => {
+        setQuizResults(results);
+        setIsQuizModalOpen(false);
+        handleMarkAsComplete();
+    };
+
+    const completionPercentage = lessons.length > 0 ? (completedLessons.size / lessons.length) * 100 : 0;
+    const isCourseComplete = completionPercentage === 100;
+    const nextLesson = currentLesson ? lessons[lessons.findIndex(l => l._id === currentLesson._id) + 1] : null;
+
+    if (loading) {
+        return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950 text-gray-500">Loading course player...</div>;
     }
-  };
 
-  const handleVideoEnd = () => {
-    if (currentLesson && !currentLesson.hasQuiz) {
-      handleMarkAsComplete();
+    if (!course) {
+        return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950 text-red-500">Course not found.</div>;
     }
-  };
 
-  const handleGetSummary = async () => {
-    const lessonContent = currentLesson?.content || currentLesson?.notes;
-    if (!lessonContent) {
-      return toast.error("No content available to summarize for this lesson.");
-    }
-    setIsSummaryLoading(true);
-    setSummary("");
-    const toastId = toast.loading("Generating key takeaways...");
+    const isLessonComplete = currentLesson && completedLessons.has(currentLesson._id);
+    const canMarkComplete = currentLesson && !currentLesson.hasQuiz;
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const mockSummary = `- This is the first key takeaway from the lesson content.\n- Here is another crucial point that students should remember.\n- Finally, this summarizes the main conclusion of the lesson.`;
-      setSummary(mockSummary);
-      toast.success("Summary generated!", { id: toastId });
-    } catch (error) {
-      toast.error("Could not generate summary.", { id: toastId });
-    } finally {
-      setIsSummaryLoading(false);
-    }
-  };
-
-  const handleQuizComplete = (results) => {
-    setQuizResults(results);
-    setIsQuizModalOpen(false);
-    handleMarkAsComplete();
-  };
-
-  const completionPercentage = lessons.length > 0 ? (completedLessons.size / lessons.length) * 100 : 0;
-  const isCourseComplete = completionPercentage === 100;
-  const nextLesson = currentLesson ? lessons[lessons.findIndex(l => l._id === currentLesson._id) + 1] : null;
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950 text-gray-500">Loading course player...</div>;
-  }
-
-  if (!course) {
-    return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950 text-red-500">Course not found.</div>;
-  }
-
-  const isLessonComplete = currentLesson && completedLessons.has(currentLesson._id);
-  const canMarkComplete = currentLesson && !currentLesson.hasQuiz;
-
-  return (
-    <div className="bg-gray-100 dark:bg-gray-950 min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <header className="mb-8">
-          <Link to="/dashboard" className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-4 font-semibold">
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Link>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-5">
-            <div className="flex flex-col sm:flex-row justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white truncate">{course.title}</h1>
-                    <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        <img src={`https://i.pravatar.cc/40?u=${course.instructor.name}`} alt={course.instructor.name} className="w-6 h-6 rounded-full" />
-                        <span>by {course.instructor.name}</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-2"><BookOpen size={16}/><span>{lessons.length} Lessons</span></div>
-                    <div className="flex items-center gap-2"><Clock size={16}/><span>{lessons.reduce((acc, l) => acc + (l.duration || 0), 0)} Mins</span></div>
-                </div>
-            </div>
-            <div className="mt-4">
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <span>Progress</span>
-                <span>{Math.round(completionPercentage)}% Complete</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <motion.div 
-                    className="bg-indigo-600 h-2 rounded-full" 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${completionPercentage}%` }}
-                    transition={{ duration: 0.5 }}
-                />
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <main className="lg:col-span-2">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentLesson?._id || 'no-lesson'}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                {currentLesson ? (
-                  <div className="space-y-8">
-                    <VideoPlayer 
-                        src={currentLesson.videoUrl} 
-                        onComplete={handleVideoEnd}
-                    />
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{currentLesson.title}</h2>
-                          <button 
-                            onClick={handleMarkAsComplete}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-indigo-700 transition disabled:opacity-50 disabled:bg-green-600 disabled:cursor-not-allowed"
-                            disabled={isLessonComplete || !canMarkComplete}
-                            title={!canMarkComplete && !isLessonComplete ? "Complete the quiz to mark this lesson as done" : ""}
-                          >
-                            {isLessonComplete ? 'Completed' : (canMarkComplete ? 'Mark as Complete' : 'Complete Quiz First')}
-                            {!isLessonComplete && canMarkComplete && <ChevronRight size={16} />}
-                          </button>
-                        </div>
-                      </div>
-                      <div className="border-b border-gray-200 dark:border-gray-700">
-                          <nav className="flex gap-6 px-6">
-                              <TabButton id="content" activeTab={activeTab} setActiveTab={setActiveTab} icon={BookOpen}>Content</TabButton>
-                              <TabButton id="qna" activeTab={activeTab} setActiveTab={setActiveTab} icon={MessageSquare}>Q&A</TabButton>
-                              <TabButton id="resources" activeTab={activeTab} setActiveTab={setActiveTab} icon={Paperclip}>Resources</TabButton>
-                              <TabButton id="notes" activeTab={activeTab} setActiveTab={setActiveTab} icon={Edit}>My Notes</TabButton>
-                          </nav>
-                      </div>
-                      <div className="p-6 min-h-[300px]">
-                          <AnimatePresence mode="wait">
-                              <motion.div
-                                  key={activeTab}
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0, y: -10 }}
-                              >
-                                  {activeTab === 'content' && <LessonContent lesson={currentLesson} onGetSummary={handleGetSummary} isSummaryLoading={isSummaryLoading} summary={summary} />}
-                                  {activeTab === 'qna' && <QnaSection user={user} currentLesson={currentLesson} courseId={courseId} />}
-                                  {activeTab === 'resources' && <ResourcesSection resources={currentLesson?.resources || []} />}
-                                  {activeTab === 'notes' && <NotesSection note={myNote} setNote={setMyNote} onSave={handleSaveNote} isSaving={isNoteSaving} />}
-                              </motion.div>
-                          </AnimatePresence>
-                      </div>
-                    </div>
-                    
-                    {currentLesson && currentLesson.hasQuiz && (
-                        <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex justify-between items-center">
+    return (
+        <div className="bg-gray-100 dark:bg-gray-950 min-h-screen">
+            <div className="container mx-auto px-4 py-8">
+                <header className="mb-8">
+                    <Link to="/dashboard" className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-4 font-semibold">
+                        <ArrowLeft size={16} />
+                        Back to Dashboard
+                    </Link>
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-5">
+                        <div className="flex flex-col sm:flex-row justify-between gap-4">
                             <div>
-                                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Test Your Knowledge</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Take the quiz for: {currentLesson.title}</p>
-                            </div>
-                            {quizResults ? (
-                                <div className="text-center">
-                                    <p className="text-sm text-gray-500">Your Score:</p>
-                                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                                        {quizResults.score} / {quizResults.totalQuestions}
-                                    </p>
+                                <h1 className="text-2xl font-bold text-gray-800 dark:text-white truncate">{course.title}</h1>
+                                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                    <img src={course.instructor?.profileImage || `https://i.pravatar.cc/40?u=${course.instructor.name}`} alt={course.instructor.name} className="w-6 h-6 rounded-full" />
+                                    <span>by {course.instructor.name}</span>
                                 </div>
-                            ) : (
-                                <button onClick={() => setIsQuizModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition">
-                                    <FileQuestion size={16} /> Take Quiz
-                                </button>
-                            )}
-                        </div>
-                    )}
-
-                    {isCourseComplete && !nextLesson ? (
-                        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border-2 border-dashed border-indigo-400 dark:border-indigo-600 shadow-lg text-center">
-                           <h3 className="text-xl font-bold text-gray-800 dark:text-white">You've finished the lessons!</h3>
-                           {course.certificateId ? (
-                                <>
-                                    <p className="text-gray-600 dark:text-gray-300 mt-2">You've already earned your certificate for this course.</p>
-                                    <Link to={`/certificate/${course.certificateId}`} className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">
-                                        <Award size={18} /> View Your Certificate
-                                    </Link>
-                                </>
-                           ) : course.assessmentId ? (
-                                <>
-                                    <p className="text-gray-600 dark:text-gray-300 mt-2">Now, head to the assessments page to earn your certificate.</p>
-                                    <Link to="/dashboard/assessments" className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">
-                                        <FileQuestion size={18} /> Go to Assessments
-                                    </Link>
-                                </>
-                           ) : (
-                                <p className="text-gray-600 dark:text-gray-300 mt-2">Congratulations on completing the course!</p>
-                           )}
-                        </div>
-                    ) : nextLesson ? (
-                        <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex justify-between items-center">
-                            <div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Next up</p>
-                                <h3 className="font-semibold text-gray-800 dark:text-gray-200">{nextLesson.title}</h3>
                             </div>
-                            <button onClick={() => handleSetCurrentLesson(nextLesson)} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold text-sm rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                                Next Lesson <ChevronRight size={16} />
-                            </button>
+                            <div className="flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+                                <div className="flex items-center gap-2"><BookOpen size={16}/><span>{lessons.length} Lessons</span></div>
+                                <div className="flex items-center gap-2"><Clock size={16}/><span>{lessons.reduce((acc, l) => acc + (l.duration || 0), 0)} Mins</span></div>
+                            </div>
                         </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-900 rounded-2xl h-full min-h-[60vh]">
-                    <p className="text-gray-500">Select a lesson to begin your learning journey.</p>
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </main>
-          <aside className="lg:col-span-1">
-            <div className="sticky top-8 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg flex flex-col h-[calc(100vh-4rem)]">
-              <div className="p-5 border-b border-gray-200 dark:border-gray-800">
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white">Course Content</h3>
-              </div>
-              <nav className="flex-1 overflow-y-auto">
-                <ul className="p-2 space-y-1">
-                  {lessons.map((lesson, index) => (
-                    <li key={lesson._id} className="relative">
-                      {currentLesson?._id === lesson._id && (
-                        <motion.div
-                          layoutId="activeLesson"
-                          className="absolute inset-0 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg"
-                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                        />
-                      )}
-                      <button
-                        onClick={() => handleSetCurrentLesson(lesson)}
-                        className="relative w-full text-left flex items-start gap-4 p-3 rounded-lg transition-colors"
-                      >
-                        <div className={`mt-1 flex-shrink-0 ${
-                            completedLessons.has(lesson._id) ? 'text-green-500' : 
-                            currentLesson?._id === lesson._id ? 'text-indigo-500' : 'text-gray-400 dark:text-gray-600'
-                        }`}>
-                          {completedLessons.has(lesson._id) ? <CheckCircle size={20} /> : <PlayCircle size={20} />}
+                        <div className="mt-4">
+                            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                <span>Progress</span>
+                                <span>{Math.round(completionPercentage)}% Complete</span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <motion.div 
+                                    className="bg-indigo-600 h-2 rounded-full" 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${completionPercentage}%` }}
+                                    transition={{ duration: 0.5 }}
+                                />
+                            </div>
                         </div>
-                        <div>
-                          <p className={`font-semibold ${currentLesson?._id === lesson._id ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-800 dark:text-gray-200'}`}>
-                            {index + 1}. {lesson.title}
-                          </p>
-                          <span className="text-xs text-gray-500">{lesson.duration || 0} mins</span>
+                    </div>
+                </header>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <main className="lg:col-span-2">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentLesson?._id || 'no-lesson'}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {currentLesson ? (
+                                    <div className="space-y-8">
+                                        <VideoPlayer 
+                                            src={currentLesson.videoUrl} 
+                                            onComplete={handleVideoEnd}
+                                        />
+                                        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                                            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{currentLesson.title}</h2>
+                                                    <button 
+                                                        onClick={handleMarkAsComplete}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-indigo-700 transition disabled:opacity-50 disabled:bg-green-600 disabled:cursor-not-allowed"
+                                                        disabled={isLessonComplete || !canMarkComplete}
+                                                        title={!canMarkComplete && !isLessonComplete ? "Complete the quiz to mark this lesson as done" : ""}
+                                                    >
+                                                        {isLessonComplete ? 'Completed' : (canMarkComplete ? 'Mark as Complete' : 'Complete Quiz First')}
+                                                        {!isLessonComplete && canMarkComplete && <ChevronRight size={16} />}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="border-b border-gray-200 dark:border-gray-700">
+                                                <nav className="flex gap-6 px-6">
+                                                    <TabButton id="content" activeTab={activeTab} setActiveTab={setActiveTab} icon={BookOpen}>Content</TabButton>
+                                                    <TabButton id="qna" activeTab={activeTab} setActiveTab={setActiveTab} icon={MessageSquare}>Q&A</TabButton>
+                                                    <TabButton id="resources" activeTab={activeTab} setActiveTab={setActiveTab} icon={Paperclip}>Resources</TabButton>
+                                                    <TabButton id="notes" activeTab={activeTab} setActiveTab={setActiveTab} icon={Edit}>My Notes</TabButton>
+                                                </nav>
+                                            </div>
+                                            <div className="p-6 min-h-[300px]">
+                                                <AnimatePresence mode="wait">
+                                                    <motion.div
+                                                        key={activeTab}
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -10 }}
+                                                    >
+                                                        {activeTab === 'content' && <LessonContent lesson={currentLesson} onGetSummary={handleGetSummary} isSummaryLoading={isSummaryLoading} summary={summary} />}
+                                                        {activeTab === 'qna' && <QnaSection user={user} currentLesson={currentLesson} courseId={courseId} />}
+                                                        {activeTab === 'resources' && <ResourcesSection resources={currentLesson?.resources || []} />}
+                                                        {activeTab === 'notes' && <NotesSection note={myNote} setNote={setMyNote} onSave={handleSaveNote} isSaving={isNoteSaving} />}
+                                                    </motion.div>
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
+                                        
+                                        {currentLesson && currentLesson.hasQuiz && (
+                                            <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex justify-between items-center">
+                                                <div>
+                                                    <h3 className="font-semibold text-gray-800 dark:text-gray-200">Test Your Knowledge</h3>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Take the quiz for: {currentLesson.title}</p>
+                                                </div>
+                                                {quizResults ? (
+                                                    <div className="text-center">
+                                                        <p className="text-sm text-gray-500">Your Score:</p>
+                                                        <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                                                            {quizResults.score} / {quizResults.totalQuestions}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={() => setIsQuizModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition">
+                                                        <FileQuestion size={16} /> Take Quiz
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {isCourseComplete && !nextLesson ? (
+                                            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border-2 border-dashed border-indigo-400 dark:border-indigo-600 shadow-lg text-center">
+                                               <h3 className="text-xl font-bold text-gray-800 dark:text-white">You've finished the lessons!</h3>
+                                               {course.certificateId ? (
+                                                    <>
+                                                        <p className="text-gray-600 dark:text-gray-300 mt-2">You've already earned your certificate for this course.</p>
+                                                        <Link to={`/certificate/${course.certificateId}`} className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">
+                                                            <Award size={18} /> View Your Certificate
+                                                        </Link>
+                                                    </>
+                                               ) : course.assessmentId ? (
+                                                    <>
+                                                        <p className="text-gray-600 dark:text-gray-300 mt-2">Now, head to the assessments page to earn your certificate.</p>
+                                                        <Link to="/dashboard/assessments" className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">
+                                                            <FileQuestion size={18} /> Go to Assessments
+                                                        </Link>
+                                                    </>
+                                               ) : (
+                                                    <p className="text-gray-600 dark:text-gray-300 mt-2">Congratulations on completing the course!</p>
+                                               )}
+                                            </div>
+                                        ) : nextLesson ? (
+                                            <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Next up</p>
+                                                    <h3 className="font-semibold text-gray-800 dark:text-gray-200">{nextLesson.title}</h3>
+                                                </div>
+                                                <button onClick={() => handleSetCurrentLesson(nextLesson)} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold text-sm rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                                                    Next Lesson <ChevronRight size={16} />
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                ) : (
+                                    <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-900 rounded-2xl h-full min-h-[60vh]">
+                                        <p className="text-gray-500">Select a lesson to begin your learning journey.</p>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
+                    </main>
+                    <aside className="lg:col-span-1">
+                        <div className="sticky top-8 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg flex flex-col h-[calc(100vh-4rem)]">
+                            <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                                <h3 className="text-lg font-bold text-gray-800 dark:text-white">Course Content</h3>
+                            </div>
+                            <nav className="flex-1 overflow-y-auto">
+                                <ul className="p-2 space-y-1">
+                                    {lessons.map((lesson, index) => (
+                                        <li key={lesson._id} className="relative">
+                                            {currentLesson?._id === lesson._id && (
+                                                <motion.div
+                                                    layoutId="activeLesson"
+                                                    className="absolute inset-0 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg"
+                                                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                                />
+                                            )}
+                                            <button
+                                                onClick={() => handleSetCurrentLesson(lesson)}
+                                                className="relative w-full text-left flex items-start gap-4 p-3 rounded-lg transition-colors"
+                                            >
+                                                <div className={`mt-1 flex-shrink-0 ${
+                                                    completedLessons.has(lesson._id) ? 'text-green-500' : 
+                                                    currentLesson?._id === lesson._id ? 'text-indigo-500' : 'text-gray-400 dark:text-gray-600'
+                                                }`}>
+                                                    {completedLessons.has(lesson._id) ? <CheckCircle size={20} /> : <PlayCircle size={20} />}
+                                                </div>
+                                                <div>
+                                                    <p className={`font-semibold ${currentLesson?._id === lesson._id ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-800 dark:text-gray-200'}`}>
+                                                        {index + 1}. {lesson.title}
+                                                    </p>
+                                                    <span className="text-xs text-gray-500">{lesson.duration || 0} mins</span>
+                                                </div>
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </nav>
                         </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
+                    </aside>
+                </div>
             </div>
-          </aside>
+            <QuizPlayerModal 
+                isOpen={isQuizModalOpen}
+                onClose={() => setIsQuizModalOpen(false)}
+                lesson={currentLesson}
+                onQuizComplete={handleQuizComplete}
+            />
+            <ReviewModal
+                isOpen={isReviewModalOpen}
+                onClose={() => setIsReviewModalOpen(false)}
+                course={course}
+                onReviewSubmitted={() => {
+                    console.log("Review submitted!");
+                }}
+            />
         </div>
-      </div>
-      <QuizPlayerModal 
-        isOpen={isQuizModalOpen}
-        onClose={() => setIsQuizModalOpen(false)}
-        lesson={currentLesson}
-        onQuizComplete={handleQuizComplete}
-      />
-      <ReviewModal
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        course={course}
-        onReviewSubmitted={() => {
-            console.log("Review submitted!");
-        }}
-      />
-    </div>
-  );
+    );
 }

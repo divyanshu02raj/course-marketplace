@@ -1,4 +1,4 @@
-// controllers/quizController.js
+// course-marketplace-backend\controllers\quizController.js
 const Quiz = require('../models/Quiz');
 const QuizQuestion = require('../models/QuizQuestion');
 const QuizAttempt = require('../models/QuizAttempt');
@@ -7,7 +7,7 @@ const Course = require('../models/Course');
 
 // --- Instructor Functions ---
 
-// Get or create a quiz for a lesson, including its questions
+// For an instructor, finds the quiz for a lesson or creates a new one if it doesn't exist.
 exports.getQuizForLesson = async (req, res) => {
     try {
         const { lessonId } = req.params;
@@ -32,7 +32,6 @@ exports.getQuizForLesson = async (req, res) => {
     }
 };
 
-// Add a question to a quiz
 exports.addQuestionToQuiz = async (req, res) => {
     try {
         const { quizId } = req.params;
@@ -46,7 +45,7 @@ exports.addQuestionToQuiz = async (req, res) => {
         });
         await newQuestion.save();
 
-        // After adding a question, update the lesson to show it has a quiz
+        // After adding the first question, mark the parent lesson as having a quiz.
         const quiz = await Quiz.findById(quizId);
         if (quiz) {
             await Lesson.findByIdAndUpdate(quiz.lesson, { hasQuiz: true });
@@ -58,7 +57,6 @@ exports.addQuestionToQuiz = async (req, res) => {
     }
 };
 
-// Update a question
 exports.updateQuestion = async (req, res) => {
     try {
         const { questionId } = req.params;
@@ -70,14 +68,13 @@ exports.updateQuestion = async (req, res) => {
     }
 };
 
-// Delete a question
 exports.deleteQuestion = async (req, res) => {
     try {
         const { questionId } = req.params;
         const deleted = await QuizQuestion.findByIdAndDelete(questionId);
         if (!deleted) return res.status(404).json({ message: "Question not found" });
 
-        // After deleting, check if it was the last question
+        // If that was the last question in the quiz, update the parent lesson.
         const remainingQuestions = await QuizQuestion.countDocuments({ quiz: deleted.quiz });
         if (remainingQuestions === 0) {
             const quiz = await Quiz.findById(deleted.quiz);
@@ -94,14 +91,14 @@ exports.deleteQuestion = async (req, res) => {
 
 // --- Student Functions ---
 
-// Get a quiz for a student to take (without correct answers)
+// Fetches a quiz for a student to take, ensuring correct answers are not included.
 exports.getQuizForStudent = async (req, res) => {
     try {
         const { lessonId } = req.params;
         const quiz = await Quiz.findOne({ lesson: lessonId });
         if (!quiz) return res.status(404).json({ message: "No quiz found for this lesson." });
 
-        // Select all fields EXCEPT the correctAnswer
+        // Crucially, select all fields EXCEPT the correctAnswer to prevent cheating.
         const questions = await QuizQuestion.find({ quiz: quiz._id }).select('-correctAnswer');
         res.json({ quiz, questions });
     } catch (error) {
@@ -109,7 +106,7 @@ exports.getQuizForStudent = async (req, res) => {
     }
 };
 
-// Submit a quiz attempt and get the score
+// Processes a student's quiz submission, calculates the score, and records the attempt.
 exports.submitQuizAttempt = async (req, res) => {
     try {
         const { quizId } = req.params;
@@ -124,6 +121,7 @@ exports.submitQuizAttempt = async (req, res) => {
         let score = 0;
         const attemptAnswers = [];
 
+        // Compare student's answers against the correct answers safely on the server.
         for (const question of questions) {
             const selectedAnswer = answers[question._id];
             const isCorrect = selectedAnswer === question.correctAnswer;

@@ -1,3 +1,4 @@
+// course-marketplace-frontend\src\pages\PrintCertificatePage.jsx
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';

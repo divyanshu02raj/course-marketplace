@@ -1,11 +1,10 @@
-// controllers/lessonController.js
+// course-marketplace-backend\controllers\lessonController.js
 const Lesson = require("../models/Lesson");
 const Course = require("../models/Course");
 
 // Create a new lesson
 exports.createLesson = async (req, res) => {
   const { courseId } = req.params;
-  // Use 'content' instead of 'notes'
   const { title, videoUrl, content, order, duration, isPreview, resources } = req.body;
 
   try {
@@ -20,7 +19,7 @@ exports.createLesson = async (req, res) => {
       course: courseId,
       title,
       videoUrl,
-      content, // ✅ Use 'content'
+      content,
       order,
       duration,
       isPreview,

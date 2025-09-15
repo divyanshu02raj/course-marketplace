@@ -1,11 +1,11 @@
-// routes/enrollmentRoutes.js
+// course-marketplace-backend\routes\enrollmentRoutes.js
 const express = require("express");
 const router = express.Router();
 const { protect, instructorOnly } = require("../middleware/authMiddleware");
 const { 
     getEnrollmentProgress, 
     markLessonAsComplete,
-    getEnrolledStudentsForCourse // Import the new function
+    getEnrolledStudentsForCourse
 } = require("../controllers/enrollmentController");
 
 // --- Student Routes ---

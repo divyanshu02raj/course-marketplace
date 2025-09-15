@@ -1,4 +1,4 @@
-// src/StudentDashboardComponents/ReviewModal.jsx
+// course-marketplace-frontend\src\StudentDashboardComponents\ReviewModal.jsx
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import axios from '../api/axios';

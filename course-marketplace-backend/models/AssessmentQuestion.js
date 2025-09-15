@@ -1,3 +1,4 @@
+//course-marketplace-backend\models\AssessmentQuestion.js
 const mongoose = require('mongoose');
 
 const assessmentQuestionSchema = new mongoose.Schema({
@@ -11,9 +12,9 @@ const assessmentQuestionSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  // Field to support images or videos in questions
+  // Optional media (image or video) to be displayed with the question.
   media: {
-    mediaType: { // Corrected field name for clarity
+    mediaType: {
       type: String,
       enum: ['image', 'video'],
     },
@@ -27,14 +28,17 @@ const assessmentQuestionSchema = new mongoose.Schema({
     enum: ['multiple-choice', 'true-false', 'fill-in-the-blank'],
     default: 'multiple-choice',
   },
-  // Options for multiple-choice questions
+  // An array of possible answers, used primarily for 'multiple-choice' questions.
   options: [
     {
       type: String,
       trim: true,
     },
   ],
-  // The correct answer.
+  // Stores the correct answer. The expected value depends on the questionType.
+  // For 'multiple-choice', it's the string of the correct option.
+  // For 'true-false', it's "True" or "False".
+  // For 'fill-in-the-blank', it's the expected text.
   correctAnswer: {
     type: String, 
     required: true,

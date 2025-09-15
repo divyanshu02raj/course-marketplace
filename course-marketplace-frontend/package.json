@@ -24,6 +24,7 @@
     "react-calendar": "^6.0.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",
+    "react-quill": "^2.0.0",
     "react-router-dom": "^7.6.2",
     "react-scripts": "^5.0.1",
     "recharts": "^3.0.2",

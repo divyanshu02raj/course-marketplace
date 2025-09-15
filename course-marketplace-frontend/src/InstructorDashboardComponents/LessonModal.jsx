@@ -1,4 +1,4 @@
-// src/InstructorDashboardComponents/LessonModal.jsx
+//course-marketplace-frontend\src\InstructorDashboardComponents\LessonModal.jsx
 import React, { useState, useEffect } from "react";
 import { X, UploadCloud, Paperclip, Plus, Trash2, Link, FileUp } from "lucide-react";
 import toast from "react-hot-toast";
@@ -20,7 +20,8 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoFileName, setVideoFileName] = useState("");
-  
+  const [uploadProgress, setUploadProgress] = useState(0); // State for upload progress
+
   const [resourceName, setResourceName] = useState("");
   const [resourceUrl, setResourceUrl] = useState("");
   const [uploadingResource, setUploadingResource] = useState(false);
@@ -31,7 +32,7 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
         setFormData({
           title: lesson.title || "",
           videoUrl: lesson.videoUrl || "",
-          content: lesson.content || "", // Handles both old and new data for editing
+          content: lesson.content || "",
           duration: lesson.duration || "",
           isPreview: lesson.isPreview || false,
           resources: lesson.resources || [],
@@ -41,6 +42,8 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
         setFormData(initialFormState);
         setVideoFileName("");
       }
+      // Reset progress when modal opens
+      setUploadProgress(0);
     }
   }, [lesson, isOpen]);
 
@@ -58,16 +61,26 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
 
     setUploadingVideo(true);
     setVideoFileName(file.name);
-    const toastId = toast.loading("Uploading video...");
+    setUploadProgress(0);
+    const toastId = toast.loading("Uploading video: 0%");
 
     const uploadFormData = new FormData();
     uploadFormData.append("file", file);
-    uploadFormData.append("upload_preset", "course_videos");
+    uploadFormData.append("upload_preset", "course_videos"); // Make sure this preset exists in your Cloudinary account
 
     try {
       const res = await baseAxios.post(
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,
-        uploadFormData
+        uploadFormData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+            toast.loading(`Uploading video: ${percentCompleted}%`, { id: toastId });
+          },
+        }
       );
       setFormData((prev) => ({ ...prev, videoUrl: res.data.secure_url }));
       toast.success("Video uploaded successfully!", { id: toastId });
@@ -79,7 +92,7 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
       setUploadingVideo(false);
     }
   };
-
+  
   const handleAddResourceLink = () => {
     if (!resourceName.trim() || !resourceUrl.trim()) {
       return toast.error("Both resource name and URL are required.");
@@ -99,7 +112,7 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
 
     const uploadFormData = new FormData();
     uploadFormData.append("file", file);
-    uploadFormData.append("upload_preset", "course_resources");
+    uploadFormData.append("upload_preset", "course_resources"); // Make sure this preset exists
 
     try {
       const res = await baseAxios.post(
@@ -125,10 +138,7 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
     e.preventDefault();
     if (!formData.title) return toast.error("Lesson title is required.");
     setIsSaving(true);
-    
-    // ✅ FIX: Send the formData directly without renaming 'content' to 'notes'.
     await onSave(formData);
-
     setIsSaving(false);
   };
 
@@ -159,11 +169,38 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
             <label className="relative flex flex-col justify-center items-center w-full h-36 bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-indigo-500 transition">
               <div className="text-center text-gray-500 dark:text-gray-400 flex flex-col items-center">
                 <UploadCloud className="w-8 h-8 mb-2" />
-                {uploadingVideo ? <span className="text-sm">Uploading...</span> : <><span className="text-sm font-semibold">Click to upload a video</span><span className="text-xs">MP4, MOV, AVI</span></>}
+                {uploadingVideo ? 
+                  <span className="text-sm">Uploading...</span> : 
+                  <>
+                    <span className="text-sm font-semibold">Click to upload a video</span>
+                    <span className="text-xs">MP4, MOV, AVI</span>
+                  </>
+                }
               </div>
               <input type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" disabled={uploadingVideo} />
             </label>
-            {videoFileName && !uploadingVideo && <p className="text-sm text-green-600 dark:text-green-400 mt-2">File ready: <strong>{videoFileName}</strong></p>}
+            
+            {/* ** THE FIX IS HERE: Progress bar now integrated into the layout ** */}
+            {uploadingVideo && (
+              <div className="mt-2">
+                <div className="flex justify-between mb-1">
+                    <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">{videoFileName}</span>
+                    <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                    <div
+                        className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                </div>
+              </div>
+            )}
+            
+            {videoFileName && !uploadingVideo && (
+              <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                File ready: <strong>{videoFileName}</strong>
+              </p>
+            )}
           </div>
 
           {formData.videoUrl && (
@@ -227,3 +264,4 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
     </div>
   );
 }
+

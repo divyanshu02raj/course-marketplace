@@ -1,4 +1,4 @@
-// course-marketplace-backend\controllers\courseController.js
+// course-marketplace-backend/controllers/courseController.js
 const Course = require("../models/Course");
 const Enrollment = require("../models/Enrollment"); 
 const Assessment = require("../models/Assessment");
@@ -8,7 +8,6 @@ const AssessmentAttempt = require("../models/AssessmentAttempt");
 
 // --- Public & Student Functions ---
 
-// Get all published courses for the student view
 const getAllPublishedCourses = async (req, res) => {
   try {
     const courses = await Course.find({ status: "published" })
@@ -20,12 +19,11 @@ const getAllPublishedCourses = async (req, res) => {
   }
 };
 
-// Get courses a student is enrolled in
+// Gets all courses a student is enrolled in, and attaches their current progress to each.
 const getEnrolledCourses = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        // 1. Find all enrollments for the user and populate the course details
         const enrollments = await Enrollment.find({ user: userId })
             .populate({
                 path: 'course',
@@ -36,14 +34,14 @@ const getEnrolledCourses = async (req, res) => {
             })
             .sort({ createdAt: -1 });
 
-        // 2. Map the results to a cleaner format that includes the progress
+        // Map through enrollments to return a clean array of course objects with progress.
         const coursesWithProgress = enrollments.map(enrollment => {
             if (!enrollment.course) return null; // Handle cases where a course might have been deleted
             
-            const courseObject = enrollment.course.toObject(); // Convert Mongoose doc to a plain object
-            courseObject.progress = enrollment.progress || 0; // Attach the progress
+            const courseObject = enrollment.course.toObject();
+            courseObject.progress = enrollment.progress || 0; // Attach progress from the enrollment doc
             return courseObject;
-        }).filter(course => course !== null); // Filter out any null courses
+        }).filter(course => course !== null);
 
         res.json(coursesWithProgress);
     } catch (err) {
@@ -52,7 +50,6 @@ const getEnrolledCourses = async (req, res) => {
     }
 };
 
-// Enroll a student in a course
 const enrollInCourse = async (req, res) => {
   try {
     const courseId = req.params.courseId;
@@ -71,7 +68,7 @@ const enrollInCourse = async (req, res) => {
       return res.status(400).json({ message: "You are already enrolled in this course" });
     }
 
-    // Also create an enrollment document
+    // Enrollment requires two steps: creating an Enrollment document and updating the Course.
     const enrollment = new Enrollment({
         user: userId,
         course: courseId,
@@ -79,6 +76,7 @@ const enrollInCourse = async (req, res) => {
     
     course.enrolledStudents.push(userId);
     
+    // Run both database saves in parallel for efficiency.
     await Promise.all([course.save(), enrollment.save()]);
 
     res.status(200).json({ message: "Successfully enrolled in the course" });
@@ -91,7 +89,6 @@ const enrollInCourse = async (req, res) => {
 
 // --- Instructor-Only Functions ---
 
-// Create a new course
 const createCourse = async (req, res) => {
   try {
     const thumbnailUrl = req.body.thumbnail || "";
@@ -108,7 +105,6 @@ const createCourse = async (req, res) => {
   }
 };
 
-// Get all courses by the logged-in instructor
 const getMyCourses = async (req, res) => {
   try {
     const courses = await Course.find({ instructor: req.user._id }).sort({ createdAt: -1 });
@@ -118,7 +114,7 @@ const getMyCourses = async (req, res) => {
   }
 };
 
-// Get a course by ID
+// Gets a single course and enriches it with the current student's assessment/certificate status.
 const getCourseById = async (req, res) => {
     try {
         const course = await Course.findById(req.params.id)
@@ -130,6 +126,7 @@ const getCourseById = async (req, res) => {
         const studentId = req.user._id;
         const assessment = await Assessment.findOne({ course: course._id }).lean();
         
+        // If an assessment exists, check if the student has passed it and earned a certificate.
         if (assessment) {
             course.assessmentId = assessment._id;
             const passedAttempt = await AssessmentAttempt.findOne({
@@ -155,9 +152,9 @@ const getCourseById = async (req, res) => {
     }
 };
 
-// Update a course by ID
 const updateCourse = async (req, res) => {
   try {
+    // This query atomically finds the course by its ID and verifies the user is the instructor.
     const course = await Course.findOneAndUpdate(
       { _id: req.params.id, instructor: req.user._id },
       req.body,
@@ -170,7 +167,6 @@ const updateCourse = async (req, res) => {
   }
 };
 
-// Toggle published/draft status
 const updateCourseStatus = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -193,7 +189,6 @@ const updateCourseStatus = async (req, res) => {
   }
 };
 
-// Delete a course by ID
 const deleteCourse = async (req, res) => {
   try {
     const deleted = await Course.findOneAndDelete({ _id: req.params.id, instructor: req.user._id });

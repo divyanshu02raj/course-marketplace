@@ -1,4 +1,4 @@
-// NEW FILE: models/QuizQuestion.js
+// course-marketplace-backend\models\QuizQuestion.js
 const mongoose = require("mongoose");
 
 const QuizQuestionSchema = new mongoose.Schema({
@@ -14,8 +14,10 @@ const QuizQuestionSchema = new mongoose.Schema({
   options: {
     type: [String],
     required: true,
+    // A custom validator to ensure every multiple-choice question has at least two options.
     validate: [arr => arr.length >= 2, 'Must have at least 2 options']
   },
+  // The correct answer, which must be a string that exactly matches one of the values in the 'options' array.
   correctAnswer: {
     type: String,
     required: true
@@ -23,4 +25,3 @@ const QuizQuestionSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model("QuizQuestion", QuizQuestionSchema);
-    
