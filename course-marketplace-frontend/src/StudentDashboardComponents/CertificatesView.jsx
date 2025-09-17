@@ -1,4 +1,3 @@
-// course-marketplace-frontend\src\StudentDashboardComponents\CertificatesView.jsx
 import React, { useState } from "react";
 import { Download, Eye, Award, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,20 +9,19 @@ export default function CertificatesView({ certificates }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [downloadingId, setDownloadingId] = useState(null);
 
-  // This function now calls the backend Puppeteer service to generate and download the PDF.
   const handleDownload = async (certificate) => {
     setDownloadingId(certificate.certificateId);
-    const toastId = toast.loading("Preparing your high-quality PDF...");
+    const toastId = toast.loading("Preparing your PDF...");
     try {
-        // Use axios to make an authenticated request to the backend PDF generation endpoint.
-        // The `responseType: 'blob'` is crucial for handling the file data correctly.
+        // ** THE FIX IS HERE **
+        // We are now explicitly telling axios to include credentials (cookies) with this request.
+        // This is the most robust way to handle authenticated file downloads.
         const response = await axios.get(`/certificates/${certificate.certificateId}/download`, {
             responseType: 'blob',
-            withCredentials: true, // Ensure the authentication cookie is sent
+            withCredentials: true, // This line forces the auth cookie to be sent
         });
 
-        // Create a temporary URL from the received file data
-        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+        const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
         link.setAttribute('download', `Certificate-${certificate.course.title.replace(/ /g, '_')}.pdf`);
@@ -31,7 +29,6 @@ export default function CertificatesView({ certificates }) {
         document.body.appendChild(link);
         link.click();
         
-        // Clean up the temporary URL
         link.parentNode.removeChild(link);
         window.URL.revokeObjectURL(url);
 

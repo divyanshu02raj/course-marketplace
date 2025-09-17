@@ -248,10 +248,7 @@ export default function LessonModal({ isOpen, onClose, onSave, lesson }) {
             </div>
           </div>
           
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-            <input type="checkbox" name="isPreview" id="isPreview" checked={formData.isPreview} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500"/>
-            <label htmlFor="isPreview" className="ml-3 block text-sm font-medium">Allow free preview for this lesson</label>
-          </div>
+
         </form>
         
         <div className="flex justify-end gap-4 p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">

@@ -186,7 +186,7 @@ export default function DashboardView() {
                     <div className="flex justify-between items-center">
                         <div>
                             <h3 className="text-lg font-semibold text-white">Net Earnings</h3>
-                            <p className="text-4xl font-bold text-white">{formatCurrency(stats.netEarnings || 0)}</p>
+                            <p className="text-4xl font-bold text-white">{formatCurrency(stats.totalRevenue || 0)}</p>
                         </div>
                         <DollarSign size={32} className="text-yellow-200" />
                     </div>
