@@ -5,11 +5,38 @@
 </p>
 
 <p align="center">
-  <a href="https://your-live-deployment-link.vercel.app"><img src="https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen" alt="Live Demo"></a>
-  <a href="https://github.com/divyanshu02raj/SharedSlate"><img src="https://img.shields.io/badge/MERN-Stack-blue" alt="MERN Stack"></a>
-  <a href="https://github.com/divyanshu02raj/SharedSlate/stargazers"><img src="https://img.shields.io/github/stars/divyanshu02raj/SharedSlate?style=social" alt="GitHub stars"></a>
-  <a href="https://github.com/divyanshu02raj/SharedSlate/network/members"><img src="https://img.shields.io/github/forks/divyanshu02raj/SharedSlate?style=social" alt="GitHub forks"></a>
+  <!-- Project Info -->
+  <a href="https://course-marketplace-ten.vercel.app">
+    <img src="https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen" alt="Live Demo">
+  </a>
+  <a href="https://github.com/divyanshu02raj/SharedSlate">
+    <img src="https://img.shields.io/badge/MERN-Stack-blue" alt="MERN Stack">
+  </a>
+  <a href="https://github.com/divyanshu02raj/SharedSlate/stargazers">
+    <img src="https://img.shields.io/github/stars/divyanshu02raj/SharedSlate?style=social" alt="GitHub stars">
+  </a>
+  <a href="https://github.com/divyanshu02raj/SharedSlate/network/members">
+    <img src="https://img.shields.io/github/forks/divyanshu02raj/SharedSlate?style=social" alt="GitHub forks">
+  </a>
 </p>
+
+<p align="center">
+  <!-- Tech Stack -->
+  <img src="https://img.shields.io/badge/Frontend-React-blue?logo=react" alt="React">
+  <img src="https://img.shields.io/badge/Backend-Node.js-green?logo=node.js" alt="Node.js">
+  <img src="https://img.shields.io/badge/Database-MongoDB-brightgreen?logo=mongodb" alt="MongoDB">
+  <img src="https://img.shields.io/badge/API-Express.js-lightgrey?logo=express" alt="Express.js">
+  <img src="https://img.shields.io/badge/UI-TailwindCSS-38B2AC?logo=tailwind-css" alt="TailwindCSS">
+  <img src="https://img.shields.io/badge/Realtime-Socket.IO-black?logo=socket.io" alt="Socket.IO">
+  <img src="https://img.shields.io/badge/Payments-Razorpay-blue?logo=razorpay" alt="Razorpay">
+</p>
+
+<p align="center">
+  <!-- Deployment -->
+  <img src="https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel" alt="Vercel">
+  <img src="https://img.shields.io/badge/Backend-Render-purple?logo=render" alt="Render">
+</p>
+
 
 <p align="center">
   A full-stack e-learning marketplace built on the MERN stack. SharedSlate is designed for instructors to create and sell courses and for students to learn, earn verifiable certificates, and interact in real-time.
@@ -92,8 +119,8 @@ To get a local copy up and running, please follow these steps.
 
 1.  **Clone the Repository:**
     ```bash
-    git clone [https://github.com/divyanshu02raj/SharedSlate.git](https://github.com/divyanshu02raj/SharedSlate.git)
-    cd SharedSlate
+    git clone https://github.com/divyanshu02raj/course-marketplace.git
+    cd course-marketplace
     ```
 
 2.  **Backend Setup:**
@@ -145,36 +172,106 @@ To get a local copy up and running, please follow these steps.
 
 ## Screenshots
 
-| Landing Page | Instructor Dashboard |
-| :---: | :---: |
-| *The public-facing marketing page for the platform.* | *The data-rich hub for instructors, showing stats and recent activity.* |
-| ![Landing Page](screenshots/01-landing-page.png) | ![Instructor Dashboard](screenshots/02-instructor-dashboard.png) |
-| **Course Catalog (Student View)** | **Course Details (Pre-Enrollment)** |
-| :---: | :---: |
-| *The public catalog where students can browse, search, and filter available courses.* | *The detailed "sales page" for a single course before a student enrolls.* |
-| ![Available Courses Catalog](screenshots/03-course-catalog.png) | ![Course Page Before Enrollment](screenshots/04-course-details.png) |
-| **My Courses (Instructor View)** | **The Course Player (Student View)** |
-| :---: | :---: |
-| *The instructor's view to manage all their created courses (draft & published).* | *The core learning environment with video, notes, Q&A, and AI summaries.* |
-| ![Instructor's Courses List](screenshots/05-instructor-courses.png) | ![Student - Course Player](screenshots/06-course-player.png) |
-| **Student Dashboard** | **Razorpay Payment Gateway** |
-| :---: | :---: |
-| *The student's main hub, showing their enrolled courses, progress, and certificates.* | *The secure, integrated payment modal for course enrollment.* |
-| ![Student Dashboard](screenshots/07-student-dashboard.png) | ![Razorpay Payment Modal](screenshots/08-razorpay-payment.png) |
-| **The Final Certificate** | **Public Certificate Verification** |
-| :---: | :---: |
-| *The student's view of their professionally designed, downloadable certificate.* | *The public-facing authenticity page accessed via the certificate's QR code.* |
-| ![Student - Certificate View](screenshots/09-certificate.png) | ![Public - Certificate Verification](screenshots/10-certificate-verification.png) |
-| **Lesson Manager (Instructor View)** | **Earnings Overview (Instructor View)** |
-| :---: | :---: |
-| *The interface for instructors to add, edit, and manage their course curriculum.* | *The dedicated page for instructors to track their revenue and transactions.* |
-| ![Instructor - Lesson Manager](screenshots/11-lesson-manager.png) | ![Instructor - Earnings Overview](screenshots/12-earnings-overview.png) |
-| **Real-Time Chat (Student View)** | **Real-Time Chat (Instructor View)** |
-| :---: | :---: |
-| *A student sending a message to their instructor.* | *The instructor receiving the message and replying in real-time.* |
-| ![Real-Time Chat - Student View](screenshots/13-chat-student.png) | ![Real-Time Chat - Instructor View](screenshots/14-chat-instructor.png) |
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <b>Landing Page</b><br>
+      <i>The public-facing marketing page for the platform.</i><br><br>
+      <img src="screenshots/01-landing-page.png" alt="Landing Page" width="90%">
+    </td>
+    <td align="center" width="50%">
+      <b>Instructor Dashboard</b><br>
+      <i>The data-rich hub for instructors, showing stats and recent activity.</i><br><br>
+      <img src="screenshots/02-instructor-dashboard.png" alt="Instructor Dashboard" width="90%">
+    </td>
+  </tr>
+  
+  <tr>
+    <td align="center">
+      <b>Course Catalog (Student View)</b><br>
+      <i>The public catalog where students can browse, search, and filter available courses.</i><br><br>
+      <img src="screenshots/03-course-catalog.png" alt="Course Catalog" width="90%">
+    </td>
+    <td align="center">
+      <b>Course Details (Pre-Enrollment)</b><br>
+      <i>The detailed "sales page" for a single course before a student enrolls.</i><br><br>
+      <img src="screenshots/04-course-details.png" alt="Course Details" width="90%">
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <b>My Courses (Instructor View)</b><br>
+      <i>The instructor's view to manage all their created courses (draft & published).</i><br><br>
+      <img src="screenshots/05-instructor-courses.png" alt="Instructor Courses" width="90%">
+    </td>
+    <td align="center">
+      <b>The Course Player (Student View)</b><br>
+      <i>The core learning environment with video, notes, Q&A, and AI summaries.</i><br><br>
+      <img src="screenshots/06-course-player.png" alt="Course Player" width="90%">
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <b>Student Dashboard</b><br>
+      <i>The student's main hub, showing their enrolled courses, progress, and certificates.</i><br><br>
+      <img src="screenshots/07-student-dashboard.png" alt="Student Dashboard" width="90%">
+    </td>
+    <td align="center">
+      <b>Razorpay Payment Gateway</b><br>
+      <i>The secure, integrated payment modal for course enrollment.</i><br><br>
+      <img src="screenshots/08-razorpay-payment.png" alt="Razorpay Payment" width="90%">
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <b>The Final Certificate</b><br>
+      <i>The student's view of their professionally designed, downloadable certificate.</i><br><br>
+      <img src="screenshots/09-certificate.png" alt="Certificate" width="90%">
+    </td>
+    <td align="center">
+      <b>Public Certificate Verification</b><br>
+      <i>The public-facing authenticity page accessed via the certificate's QR code.</i><br><br>
+      <img src="screenshots/10-certificate-verification.png" alt="Certificate Verification" width="90%">
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <b>Lesson Manager (Instructor View)</b><br>
+      <i>The interface for instructors to add, edit, and manage their course curriculum.</i><br><br>
+      <img src="screenshots/11-lesson-manager.png" alt="Lesson Manager" width="90%">
+    </td>
+    <td align="center">
+      <b>Earnings Overview (Instructor View)</b><br>
+      <i>The dedicated page for instructors to track their revenue and transactions.</i><br><br>
+      <img src="screenshots/12-earnings-overview.png" alt="Earnings Overview" width="90%">
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <b>Real-Time Chat (Student View)</b><br>
+      <i>A student sending a message to their instructor.</i><br><br>
+      <img src="screenshots/13-chat-student.png" alt="Chat Student View" width="90%">
+    </td>
+    <td align="center">
+      <b>Real-Time Chat (Instructor View)</b><br>
+      <i>The instructor receiving the message and replying in real-time.</i><br><br>
+      <img src="screenshots/14-chat-instructor.png" alt="Chat Instructor View" width="90%">
+    </td>
+  </tr>
+</table>
+
+
+
 
 ---
+
+
+
 
 ## Future Work
 
