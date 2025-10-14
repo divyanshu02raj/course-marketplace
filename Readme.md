@@ -9,13 +9,13 @@
   <a href="https://course-marketplace-ten.vercel.app">
     <img src="https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen" alt="Live Demo">
   </a>
-  <a href="https://github.com/divyanshu02raj/SharedSlate">
+  <a href="https://github.com/divyanshu02raj/course-marketplace">
     <img src="https://img.shields.io/badge/MERN-Stack-blue" alt="MERN Stack">
   </a>
-  <a href="https://github.com/divyanshu02raj/SharedSlate/stargazers">
+  <a href="https://github.com/divyanshu02raj/course-marketplace/stargazers">
     <img src="https://img.shields.io/github/stars/divyanshu02raj/SharedSlate?style=social" alt="GitHub stars">
   </a>
-  <a href="https://github.com/divyanshu02raj/SharedSlate/network/members">
+  <a href="https://github.com/divyanshu02raj/course-marketplace/network/members">
     <img src="https://img.shields.io/github/forks/divyanshu02raj/SharedSlate?style=social" alt="GitHub forks">
   </a>
 </p>
