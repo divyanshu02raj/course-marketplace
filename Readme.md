@@ -130,7 +130,7 @@ To get a local copy up and running, please follow these steps.
         ```
     * Install dependencies:
         ```bash
-        npm install
+        npm install --legacy-peer-deps
         ```
     * Create a `.env` file and populate it with your keys:
         ```env
